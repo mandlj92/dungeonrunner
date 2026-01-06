@@ -36,6 +36,9 @@ var _shake_remaining := 0.0
 var _shake_intensity := 0.0
 var _original_cam_position: Vector3
 var _invuln_timer := 0.0
+var _rage_mode_active := false
+var _rage_timer := 0.0
+var _original_fire_cooldown := 0.0
 
 @onready var head := $Head
 @onready var cam := $Head/Camera3D
@@ -52,6 +55,7 @@ func _ready() -> void:
 	add_to_group("player")
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	_original_cam_position = cam.position
+	_original_fire_cooldown = fire_cooldown
 	_apply_meta_upgrades()
 	_update_hud()
 
@@ -88,6 +92,7 @@ func _physics_process(delta: float) -> void:
 	_fire_timer = max(0.0, _fire_timer - delta)
 	_melee_timer = max(0.0, _melee_timer - delta)
 	_invuln_timer = max(0.0, _invuln_timer - delta)
+	_update_rage_mode(delta)
 	_update_screen_shake(delta)
 
 	var dir := Vector3.ZERO
@@ -232,6 +237,9 @@ func _screen_shake(duration: float, intensity: float) -> void:
 	_shake_remaining = duration
 	_shake_intensity = intensity
 
+func screen_shake(duration: float, intensity: float) -> void:
+	_screen_shake(duration, intensity)
+
 func _update_screen_shake(delta: float) -> void:
 	if _shake_remaining > 0:
 		_shake_remaining -= delta
@@ -299,3 +307,37 @@ func _play_damage_sound() -> void:
 
 	await get_tree().create_timer(0.15).timeout
 	player.queue_free()
+
+func activate_rage_mode(duration: float) -> void:
+	_rage_mode_active = true
+	_rage_timer = duration
+
+	# Reduce fire_cooldown by 50%
+	fire_cooldown = _original_fire_cooldown * 0.5
+
+	# Tint DamageFlash to low-opacity Red
+	if hud and hud.has_node("DamageFlash"):
+		var damage_flash = hud.get_node("DamageFlash")
+		damage_flash.visible = true
+		damage_flash.modulate = Color(1, 0, 0, 0.15)
+
+func _update_rage_mode(delta: float) -> void:
+	if not _rage_mode_active:
+		return
+
+	_rage_timer -= delta
+	if _rage_timer <= 0.0:
+		_deactivate_rage_mode()
+
+func _deactivate_rage_mode() -> void:
+	_rage_mode_active = false
+	_rage_timer = 0.0
+
+	# Reset fire_cooldown
+	fire_cooldown = _original_fire_cooldown
+
+	# Clear DamageFlash tint
+	if hud and hud.has_node("DamageFlash"):
+		var damage_flash = hud.get_node("DamageFlash")
+		damage_flash.visible = false
+		damage_flash.modulate = Color(1, 0, 0, 0)

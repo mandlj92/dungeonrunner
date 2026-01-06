@@ -122,3 +122,9 @@ func get_slot_summary(slot: int) -> Dictionary:
 	s.coins = int(cfg.get_value(SAVE_SECTION, "coins", 0))
 	s.version = int(cfg.get_value(META_SECTION, "version", 0))
 	return s
+
+# ---------- Global Hit Stop ----------
+func hit_stop(time_scale: float, duration: float) -> void:
+	Engine.time_scale = time_scale
+	await get_tree().create_timer(duration, true, false, true).timeout
+	Engine.time_scale = 1.0

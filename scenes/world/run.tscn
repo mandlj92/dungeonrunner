@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://cncaqxlg835ci" path="res://scenes/ui/HUD.tscn" id="2_hud"]
 [ext_resource type="PackedScene" uid="uid://dji0q3jquip4f" path="res://scenes/player/Player.tscn" id="3_player"]
 [ext_resource type="PackedScene" uid="uid://b67fupypxpgbl" path="res://scenes/enemies/enemy.tscn" id="4_enemy"]
-[ext_resource type="PackedScene" path="res://scenes/pickups/ammo_pickup.tscn" id="5_pickup"]
+[ext_resource type="PackedScene" uid="uid://c8vqm5yh3n7pa" path="res://scenes/pickups/ammo_pickup.tscn" id="5_pickup"]
 [ext_resource type="PackedScene" uid="uid://cal5s08tp75gd" path="res://scenes/world/Room.tscn" id="6_room"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_nm1ua"]

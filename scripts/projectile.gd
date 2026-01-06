@@ -32,9 +32,10 @@ func _on_body_entered(body: Node3D) -> void:
 	# Spawn hit particles at impact point
 	_spawn_hit_particles(global_position)
 
-	# Deal damage
+	# Deal damage with hit stop
 	var dealt := damage
 	if body and body.has_method("take_damage"):
+		await GameState.hit_stop(0.05, 0.1)
 		var res = body.take_damage(damage, direction)
 		if typeof(res) == TYPE_INT:
 			dealt = res

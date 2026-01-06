@@ -124,10 +124,9 @@ func take_damage(amount:int, hit_dir: Vector3 = Vector3.ZERO) -> int:
 		velocity += hit_dir.normalized() * hit_knockback
 	_flash_on_hit()
 	_play_hit_sound()
+	_spawn_floating_text(applied)
 	if health <= 0:
-		_spawn_death_particles()
-		queue_free()
-		GameState.add_coins(5)
+		_die()
 	return applied
 
 func _spawn_death_particles() -> void:
@@ -192,4 +191,88 @@ func _play_hit_sound() -> void:
 		playback.push_frame(Vector2(sample, sample))
 
 	await get_tree().create_timer(0.12).timeout
+	player_audio.queue_free()
+
+func _spawn_floating_text(damage_amount: int) -> void:
+	var label = Label3D.new()
+	get_parent().add_child(label)
+	label.global_position = global_position + Vector3(0, 1.5, 0)
+	label.text = str(damage_amount)
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.no_depth_test = true
+	label.font_size = 48
+
+	# Critical damage (>20) is yellow
+	if damage_amount > 20:
+		label.modulate = Color.YELLOW
+	else:
+		label.modulate = Color.WHITE
+
+	# Animate upward and fade out
+	var start_pos = label.global_position
+	var fade_duration = 0.8
+	var rise_speed = 2.0
+	var elapsed = 0.0
+
+	while elapsed < fade_duration:
+		var delta = get_process_delta_time()
+		elapsed += delta
+
+		# Move upward
+		label.global_position = start_pos + Vector3(0, rise_speed * elapsed, 0)
+
+		# Fade out
+		var alpha = 1.0 - (elapsed / fade_duration)
+		label.modulate.a = alpha
+
+		await get_tree().process_frame
+
+	label.queue_free()
+
+func _die() -> void:
+	# Disable collision
+	if $CollisionShape3D:
+		$CollisionShape3D.disabled = true
+
+	# Hide mesh
+	if mesh:
+		mesh.visible = false
+
+	# Spawn death particles
+	_spawn_death_particles()
+
+	# Play high-pitched death sound
+	_play_death_sound()
+
+	# Trigger screen shake on player
+	if player and player.has_method("screen_shake"):
+		player.screen_shake(0.2, 0.8)
+
+	# Add coins (5x for elites)
+	var coin_amount = 5
+	if has_meta("is_elite"):
+		coin_amount = 25
+	GameState.add_coins(coin_amount)
+
+	# Wait for sound/animation, then cleanup
+	await get_tree().create_timer(0.5).timeout
+	queue_free()
+
+func _play_death_sound() -> void:
+	var player_audio = AudioStreamPlayer3D.new()
+	add_child(player_audio)
+
+	var gen = AudioStreamGenerator.new()
+	gen.mix_rate = 44100
+	player_audio.stream = gen
+	player_audio.play()
+
+	var playback = player_audio.get_stream_playback() as AudioStreamGeneratorPlayback
+	# High-pitched death sound
+	for i in range(2200):
+		var pitch = 800.0 + (i * 0.5)  # Rising pitch
+		var sample = sin(i * pitch * 0.0001) * exp(-i/600.0) * 0.4
+		playback.push_frame(Vector2(sample, sample))
+
+	await get_tree().create_timer(0.5).timeout
 	player_audio.queue_free()

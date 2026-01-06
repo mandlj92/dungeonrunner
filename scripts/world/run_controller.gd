@@ -49,6 +49,9 @@ func _ready() -> void:
 			e.global_position = (room.get_node("EnemySpawn") as Marker3D).global_position + Vector3(0,1,0)
 			# Scale enemy stats based on dungeon level
 			_scale_enemy(e, difficulty_scale)
+			# 10% chance to make enemy Elite
+			if randf() < 0.1:
+				_make_elite(e)
 
 		if randf() < 0.7:
 			var p = pickup_scene.instantiate()
@@ -85,6 +88,32 @@ func _scale_enemy(enemy: Node, difficulty_multipliers: Dictionary) -> void:
 		enemy.damage = int(enemy.damage * difficulty_multipliers.damage)
 	if "speed" in enemy:
 		enemy.speed = enemy.speed * difficulty_multipliers.speed
+
+func _make_elite(enemy: Node) -> void:
+	# Mark as elite for coin drops
+	enemy.set_meta("is_elite", true)
+
+	# Scale model by 1.5x
+	if enemy.has_node("MeshInstance3D"):
+		var mesh = enemy.get_node("MeshInstance3D")
+		mesh.scale = Vector3(1.5, 1.5, 1.5)
+
+	# Multiply max_health by 3
+	if "max_health" in enemy:
+		enemy.max_health = int(enemy.max_health * 3)
+		enemy.health = enemy.max_health
+
+	# Multiply damage by 2
+	if "damage" in enemy:
+		enemy.damage = int(enemy.damage * 2)
+
+	# Change color to Red
+	if enemy.has_node("MeshInstance3D"):
+		var mesh = enemy.get_node("MeshInstance3D")
+		if mesh.mesh:
+			var mat = StandardMaterial3D.new()
+			mat.albedo_color = Color.RED
+			mesh.set_surface_override_material(0, mat)
 
 func _on_player_died() -> void:
 	GameState.reset_run()  # Reset to level 1 on death

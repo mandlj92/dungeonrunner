@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3 uid="uid://dji0q3jquip4f"]
 
 [ext_resource type="Script" path="res://scripts/player/player.gd" id="1_player"]
-[ext_resource type="PackedScene" path="res://scenes/projectile.tscn" id="2_fx3ph"]
+[ext_resource type="PackedScene" uid="uid://cy7k8kam5n3pq" path="res://scenes/projectile.tscn" id="2_fx3ph"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_xk1af"]
 
@@ -9,25 +9,30 @@
 size = Vector3(2, 2, 2)
 
 [node name="Player" type="CharacterBody3D"]
+collision_mask = 3
 script = ExtResource("1_player")
 projectile_scene = ExtResource("2_fx3ph")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("CapsuleShape3D_xk1af")
 
 [node name="Head" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
 
 [node name="Camera3D" type="Camera3D" parent="Head"]
 current = true
 
 [node name="RayCast3D" type="RayCast3D" parent="Head"]
 target_position = Vector3(0, 0, -100)
+collision_mask = 2
 
 [node name="MeleeArea" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 2
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="MeleeArea"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -1.5)
 shape = SubResource("BoxShape3D_wobrk")
 
 [node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="."]
