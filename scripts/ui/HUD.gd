@@ -18,7 +18,7 @@ func _ready() -> void:
 		lbl.name = "SavedLabel"
 		lbl.visible = false
 		lbl.modulate = Color(1,1,1,0)
-		lbl.horizontal_alignment = 1
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		# anchor center-top
 		lbl.anchor_left = 0.4
 		lbl.anchor_right = 0.6
@@ -88,9 +88,10 @@ func show_saved(text: String = "Saved", duration: float = 1.2) -> void:
 		lbl.anchor_top = 0.0
 		lbl.anchor_bottom = 0.0
 		lbl.offset_top = 10.0
-		lbl.horizontal_alignment = 1
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		add_child(lbl)
 
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.text = text
 	lbl.visible = true
 	lbl.modulate = Color(1,1,1,0)

@@ -35,8 +35,8 @@ func _refresh_slot_labels() -> void:
         var slot = i + 1
         if GameState.slot_exists(slot):
             var s = GameState.get_slot_summary(slot)
-            var coins = s.has("coins") ? s.coins : 0
-            var ver = s.has("version") ? s.version : 0
+            var coins = s.coins if s.has("coins") else 0
+            var ver = s.version if s.has("version") else 0
             slot_labels[i].text = "Slot %d: Coins: %d  (v%d)" % [slot, coins, ver]
         else:
             slot_labels[i].text = "Slot %d: Empty" % slot

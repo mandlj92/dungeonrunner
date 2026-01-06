@@ -14,13 +14,13 @@ var player
 
 func _ready() -> void:
 	randomize()
-	var seed = GameState.new_run_seed()
+	var rng_seed = GameState.new_run_seed()
 
 	# generate dungeon
 	var gen = ProcGen.new()
 	gen.room_scene = room_scene
 	gen.room_count = 10
-	var data = gen.generate(world, seed)
+	var data = gen.generate(world, rng_seed)
 
 	# bake navigation after generation
 	await get_tree().process_frame
@@ -118,9 +118,13 @@ func _make_elite(enemy: Node) -> void:
 func _on_player_died() -> void:
 	GameState.reset_run()  # Reset to level 1 on death
 	GameState.save_game()  # Save coins and progress
-	get_tree().change_scene_to_file("res://scenes/summary.tscn")
+	_queue_summary_scene_change()
 
 func _on_player_exited() -> void:
 	GameState.advance_dungeon()  # Advance to next level
 	GameState.save_game()  # Save coins and progress
-	get_tree().change_scene_to_file("res://scenes/summary.tscn")
+	_queue_summary_scene_change()
+
+func _queue_summary_scene_change() -> void:
+	# Defer scene change so we don't remove physics bodies during callbacks (e.g. portal overlap)
+	get_tree().call_deferred("change_scene_to_file", "res://scenes/summary.tscn")

@@ -134,7 +134,7 @@ func _physics_process(delta: float) -> void:
 	if global_transform.origin.y < fall_death_threshold:
 		_fall_timer += delta
 		if _fall_timer >= fall_death_time:
-			emit_signal("died")
+			died.emit()
 	else:
 		_fall_timer = 0.0
 
@@ -215,7 +215,7 @@ func take_damage(amount: int, hit_dir: Vector3 = Vector3.ZERO) -> void:
 	if health <= 0:
 		health = 0
 		_update_hud()
-		emit_signal("died")
+		died.emit()
 	else:
 		_update_hud()
 

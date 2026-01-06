@@ -5,9 +5,9 @@ class_name ProcGen
 @export var room_count := 10
 @export var spacing := 18.0
 
-func generate(parent: Node3D, seed: int) -> Dictionary:
+func generate(parent: Node3D, rng_seed: int) -> Dictionary:
 	var rng = RandomNumberGenerator.new()
-	rng.seed = seed
+	rng.seed = rng_seed
 
 	var rooms := []
 	var positions := []

@@ -11,4 +11,5 @@ func _process(delta: float) -> void:
 
 func _on_body_entered(body: Node3D) -> void:
 	if body.is_in_group("player") and body.has_signal("exited"):
-		body.emit_signal("exited")
+		# Defer so any scene changes happen outside the physics callback
+		body.call_deferred("emit_signal", "exited")
