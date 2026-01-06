@@ -1,10 +1,10 @@
 [gd_scene load_steps=3 format=3 uid="uid://cal5s08tp75gd"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_lyhqv"]
-size = Vector3(10, 1, 10)
+size = Vector3(24, 1, 24)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_ax7oq"]
-size = Vector3(10, 1, 10)
+size = Vector3(24, 1, 24)
 
 [node name="Room" type="Node3D"]
 
@@ -24,3 +24,6 @@ shape = SubResource("BoxShape3D_ax7oq")
 [node name="PickupSpawn" type="Marker3D" parent="."]
 
 [node name="ExitSpawn" type="Marker3D" parent="."]
+
+[node name="GridMap" type="GridMap" parent="."]
+cell_size = Vector3(1, 1, 1)

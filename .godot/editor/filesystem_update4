@@ -5,3 +5,4 @@ res://scenes/ui/HUD.tscn
 res://scenes/player/Player.tscn
 res://scenes/enemies/enemy.tscn
 res://scenes/world/Room.tscn
+res://scripts/enemies/enemy.gd

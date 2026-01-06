@@ -38,25 +38,45 @@ func _ready() -> void:
 
 	# spawn enemies/pickups with difficulty scaling
 	var difficulty_scale = _get_difficulty_scale()
+	var room_valid_floors = data.get("room_valid_floors", {})
+
 	for i in range(1, data["rooms"].size()):
 		var room = data["rooms"][i]
+		var valid_floors: Array = room_valid_floors.get(i, [])
 
-		# More enemies spawn at higher levels
-		var enemy_chance = min(0.8 + (GameState.dungeon_level - 1) * 0.05, 1.0)
-		if randf() < enemy_chance:
-			var e = enemy_scene.instantiate()
-			add_child(e)
-			e.global_position = (room.get_node("EnemySpawn") as Marker3D).global_position + Vector3(0,1,0)
-			# Scale enemy stats based on dungeon level
-			_scale_enemy(e, difficulty_scale)
-			# 10% chance to make enemy Elite
-			if randf() < 0.1:
-				_make_elite(e)
+		# Spawn multiple enemies per room (3-6 enemies)
+		var enemy_count := randi_range(3, 6)
 
+		# Ensure we have enough valid positions
+		if valid_floors.size() > 0:
+			for enemy_idx in range(enemy_count):
+				# More enemies spawn at higher levels
+				var enemy_chance = min(0.8 + (GameState.dungeon_level - 1) * 0.05, 1.0)
+				if randf() < enemy_chance:
+					var e = enemy_scene.instantiate()
+					add_child(e)
+
+					# Pick random valid floor position
+					var spawn_pos: Vector3 = valid_floors[randi() % valid_floors.size()]
+					e.global_position = spawn_pos + Vector3(0, 1, 0)
+
+					# Scale enemy stats based on dungeon level
+					_scale_enemy(e, difficulty_scale)
+
+					# 10% chance to make enemy Elite
+					if randf() < 0.1:
+						_make_elite(e)
+
+		# Spawn pickups (use old marker as fallback if no valid floors)
 		if randf() < 0.7:
 			var p = pickup_scene.instantiate()
 			add_child(p)
-			p.global_position = (room.get_node("PickupSpawn") as Marker3D).global_position + Vector3(0,1,0)
+
+			if valid_floors.size() > 0:
+				var spawn_pos: Vector3 = valid_floors[randi() % valid_floors.size()]
+				p.global_position = spawn_pos + Vector3(0, 1, 0)
+			else:
+				p.global_position = (room.get_node("PickupSpawn") as Marker3D).global_position + Vector3(0, 1, 0)
 
 	# spawn exit portal in final room (use exported scene or fallback to default)
 	var portal_packed: PackedScene = portal_scene

@@ -194,7 +194,7 @@ func _play_hit_sound() -> void:
 	await get_tree().create_timer(0.12).timeout
 	player_audio.queue_free()
 
-func _spawn_gibs(pos: Vector3) -> void:
+func _spawn_gibs(_pos: Vector3) -> void:
 	for i in range(randi_range(4, 5)):
 		# Create RigidBody3D
 		var gib = RigidBody3D.new()
