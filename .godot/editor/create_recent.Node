@@ -1,0 +1,14 @@
+CollisionShape3D
+Marker3D
+MeshInstance3D
+Node3D
+NavigationAgent3D
+CharacterBody3D
+AudioStreamPlayer3D
+Area3D
+RayCast3D
+Camera3D
+Label
+Control
+Node
+CanvasLayer

@@ -1,0 +1,40 @@
+# Godot
+.import/
+.export/
+.export_presets.cfg
+
+# Mono / C#
+.mono/
+*.csproj
+*.sln
+
+# Godot
+.import/
+.export/
+.export_presets.cfg
+
+# Mono / C#
+.mono/
+*.csproj
+*.sln
+
+# Godot
+.import/
+.export/
+.export_presets.cfg
+
+# Mono / C#
+.mono/
+*.csproj
+*.sln
+
+# Build ouput
+bin/
+builds/
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
+

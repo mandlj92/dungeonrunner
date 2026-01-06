@@ -1,0 +1,26 @@
+[gd_scene load_steps=3 format=3 uid="uid://cal5s08tp75gd"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_lyhqv"]
+size = Vector3(10, 1, 10)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ax7oq"]
+size = Vector3(10, 1, 10)
+
+[node name="Room" type="Node3D"]
+
+[node name="Floor" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Floor"]
+mesh = SubResource("BoxMesh_lyhqv")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor"]
+shape = SubResource("BoxShape3D_ax7oq")
+
+[node name="SpawnPoint" type="Marker3D" parent="."]
+
+[node name="EnemySpawn" type="Marker3D" parent="."]
+
+[node name="PickupSpawn" type="Marker3D" parent="."]
+
+[node name="ExitSpawn" type="Marker3D" parent="."]

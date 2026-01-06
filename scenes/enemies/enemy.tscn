@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://b67fupypxpgbl"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_qg238"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_w3fts"]
+
+[node name="Enemy" type="CharacterBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.346567, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape3D_qg238")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("CapsuleMesh_w3fts")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]

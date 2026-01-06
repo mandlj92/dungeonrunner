@@ -1,0 +1,58 @@
+[gd_scene load_steps=6 format=3 uid="uid://save_slots_scene"]
+
+[ext_resource type="Script" path="res://scripts/ui/save_slots.gd" id="1_save_slots"]
+
+[node name="SaveSlots" type="Control"]
+script = ExtResource("1_save_slots")
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Panel" type="Panel" parent="."]
+anchor_left = 0.25
+anchor_top = 0.2
+anchor_right = 0.75
+anchor_bottom = 0.8
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+margin_left = 12.0
+margin_top = 12.0
+margin_right = 12.0
+margin_bottom = 12.0
+
+[node name="Title" type="Label" parent="Panel/VBox"]
+text = "Save / Load"
+
+[node name="SlotRow1" type="HBoxContainer" parent="Panel/VBox"]
+[node name="SlotLabel1" type="Label" parent="Panel/VBox/SlotRow1"]
+text = "Slot 1: Empty"
+[node name="Load1" type="Button" parent="Panel/VBox/SlotRow1"]
+text = "Load"
+[node name="Save1" type="Button" parent="Panel/VBox/SlotRow1"]
+text = "Save"
+[node name="Delete1" type="Button" parent="Panel/VBox/SlotRow1"]
+text = "Delete"
+
+[node name="SlotRow2" type="HBoxContainer" parent="Panel/VBox"]
+[node name="SlotLabel2" type="Label" parent="Panel/VBox/SlotRow2"]
+text = "Slot 2: Empty"
+[node name="Load2" type="Button" parent="Panel/VBox/SlotRow2"]
+text = "Load"
+[node name="Save2" type="Button" parent="Panel/VBox/SlotRow2"]
+text = "Save"
+[node name="Delete2" type="Button" parent="Panel/VBox/SlotRow2"]
+text = "Delete"
+
+[node name="SlotRow3" type="HBoxContainer" parent="Panel/VBox"]
+[node name="SlotLabel3" type="Label" parent="Panel/VBox/SlotRow3"]
+text = "Slot 3: Empty"
+[node name="Load3" type="Button" parent="Panel/VBox/SlotRow3"]
+text = "Load"
+[node name="Save3" type="Button" parent="Panel/VBox/SlotRow3"]
+text = "Save"
+[node name="Delete3" type="Button" parent="Panel/VBox/SlotRow3"]
+text = "Delete"
+
+[node name="Back" type="Button" parent="Panel/VBox"]
+text = "Back"
