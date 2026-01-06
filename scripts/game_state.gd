@@ -4,9 +4,15 @@ enum UpgradeType {
 	MAX_HEALTH,
 	MOVE_SPEED,
 	MELEE_DAMAGE,
-	GUN_DAMAGE,
+	GUN_DAMAGE,  # DEPRECATED - Use behavioral upgrades instead
 	AMMO_MAX,
-	LIFESTEAL
+	LIFESTEAL,
+	# Behavioral upgrades (new system)
+	PIERCING_ROUNDS,
+	EXPLOSIVE_RELOAD,
+	FIRE_TRAIL,
+	VAMPIRE_BULLETS,
+	DASH_ATTACK,
 }
 
 var coins: int = 0
@@ -16,12 +22,18 @@ var max_dungeon_reached: int = 1  # Highest dungeon ever reached (persistent)
 
 # Meta upgrades (heavy-ish progression MVP)
 var upgrades := {
-	UpgradeType.MAX_HEALTH: 0,     # +10 per level
-	UpgradeType.MOVE_SPEED: 0,     # +3% per level
-	UpgradeType.MELEE_DAMAGE: 0,   # +10% per level
-	UpgradeType.GUN_DAMAGE: 0,     # +10% per level
-	UpgradeType.AMMO_MAX: 0,       # +5 per level
-	UpgradeType.LIFESTEAL: 0       # +1% per level (simple)
+	UpgradeType.MAX_HEALTH: 0,        # +10 per level
+	UpgradeType.MOVE_SPEED: 0,        # +3% per level
+	UpgradeType.MELEE_DAMAGE: 0,      # +10% per level
+	UpgradeType.GUN_DAMAGE: 0,        # DEPRECATED +10% per level
+	UpgradeType.AMMO_MAX: 0,          # +5 per level
+	UpgradeType.LIFESTEAL: 0,         # +1% per level (simple)
+	# Behavioral upgrades (0 = not owned, 1+ = owned/level)
+	UpgradeType.PIERCING_ROUNDS: 0,   # Bullets pierce enemies
+	UpgradeType.EXPLOSIVE_RELOAD: 0,  # Reload creates shockwave
+	UpgradeType.FIRE_TRAIL: 0,        # Sprint leaves fire
+	UpgradeType.VAMPIRE_BULLETS: 0,   # Gun shots heal on hit
+	UpgradeType.DASH_ATTACK: 0,       # Dash damages enemies
 }
 
 const SAVE_PATH := "user://save_game.cfg"
@@ -183,6 +195,27 @@ func hit_stop(time_scale: float, duration: float) -> void:
 	Engine.time_scale = time_scale
 	await get_tree().create_timer(duration, true, false, true).timeout
 	Engine.time_scale = 1.0
+
+# ---------- Upgrade System Helpers ----------
+func get_upgrade_script(upgrade_type: UpgradeType) -> Script:
+	match upgrade_type:
+		UpgradeType.PIERCING_ROUNDS:
+			return preload("res://scripts/upgrades/piercing_rounds.gd")
+		UpgradeType.EXPLOSIVE_RELOAD:
+			return preload("res://scripts/upgrades/explosive_reload.gd")
+		UpgradeType.FIRE_TRAIL:
+			return preload("res://scripts/upgrades/fire_trail.gd")
+		_:
+			return null
+
+func is_behavioral_upgrade(upgrade_type: UpgradeType) -> bool:
+	return upgrade_type in [
+		UpgradeType.PIERCING_ROUNDS,
+		UpgradeType.EXPLOSIVE_RELOAD,
+		UpgradeType.FIRE_TRAIL,
+		UpgradeType.VAMPIRE_BULLETS,
+		UpgradeType.DASH_ATTACK,
+	]
 
 # ---------- Save Integrity ----------
 func _calculate_save_checksum(coin_count: int, upgrade_dict: Dictionary, dungeon_lvl: int, max_dungeon: int) -> String:
