@@ -11,7 +11,24 @@ size = Vector3(2, 2, 2)
 [node name="Player" type="CharacterBody3D"]
 collision_mask = 3
 script = ExtResource("1_player")
+base_speed = null
+sprint_mult = null
+mouse_sens = null
+jump_velocity = null
+gravity = null
+base_max_health = null
+base_ammo_max = null
+fall_death_threshold = null
+fall_death_time = null
+gun_damage = null
+melee_damage = null
+fire_cooldown = null
+melee_cooldown = null
 projectile_scene = ExtResource("2_fx3ph")
+hurt_invuln_time = null
+hurt_knockback = null
+hurt_flash_time = null
+debug_melee = null
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)

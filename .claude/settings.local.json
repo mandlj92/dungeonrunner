@@ -3,7 +3,8 @@
     "allow": [
       "Bash(/Applications/Godot.app/Contents/MacOS/Godot:*)",
       "Bash(cat:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(find:*)"
     ]
   }
 }

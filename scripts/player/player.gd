@@ -49,6 +49,7 @@ var _invuln_timer := 0.0
 var _rage_mode_active := false
 var _rage_timer := 0.0
 var _original_fire_cooldown := 0.0
+var _mouse_input: Vector2 = Vector2.ZERO
 
 @onready var head := $Head
 @onready var cam := $Head/Camera3D
@@ -87,9 +88,8 @@ func _apply_meta_upgrades() -> void:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
-		rotate_y(-event.relative.x * mouse_sens)
-		head.rotate_x(-event.relative.y * mouse_sens)
-		head.rotation.x = clamp(head.rotation.x, deg_to_rad(-80), deg_to_rad(80))
+		# Accumulate mouse input instead of applying rotation immediately
+		_mouse_input += event.relative
 
 	if event.is_action_pressed("pause"):
 		if get_tree().paused:
@@ -104,6 +104,13 @@ func _physics_process(delta: float) -> void:
 	_invuln_timer = max(0.0, _invuln_timer - delta)
 	_update_rage_mode(delta)
 	_update_screen_shake(delta)
+
+	# Apply accumulated mouse input to rotation
+	if _mouse_input != Vector2.ZERO:
+		rotate_y(-_mouse_input.x * mouse_sens)
+		head.rotate_x(-_mouse_input.y * mouse_sens)
+		head.rotation.x = clamp(head.rotation.x, deg_to_rad(-80), deg_to_rad(80))
+		_mouse_input = Vector2.ZERO
 
 	# Dynamic FOV based on speed
 	var horizontal_velocity := Vector2(velocity.x, velocity.z).length()
@@ -177,7 +184,7 @@ func _try_fire() -> void:
 	spawn_transform.basis = cam.global_transform.basis
 
 	# Emit signal to spawn projectile
-	GameState.spawn_projectile.emit(projectile_scene, spawn_transform, gun_damage, self)
+	Events.spawn_projectile.emit(projectile_scene, spawn_transform, gun_damage, self)
 
 	_update_hud()
 
@@ -224,14 +231,15 @@ func take_damage(amount: int, hit_dir: Vector3 = Vector3.ZERO) -> void:
 		velocity += dir * hurt_knockback
 	_screen_shake(0.3, 0.45)
 	_play_damage_sound()
+	Events.player_damaged.emit()
 	if hud and hud.has_method("flash_damage"):
 		hud.flash_damage(0.8, hurt_flash_time)
 	if health <= 0:
 		health = 0
-		_update_hud()
+		Events.player_health_changed.emit(health, max_health)
 		died.emit()
 	else:
-		_update_hud()
+		Events.player_health_changed.emit(health, max_health)
 
 func add_ammo(amount:int) -> void:
 	ammo = clamp(ammo + amount, 0, ammo_max)
@@ -239,7 +247,7 @@ func add_ammo(amount:int) -> void:
 
 func heal(amount:int) -> void:
 	health = clamp(health + amount, 0, max_health)
-	_update_hud()
+	Events.player_health_changed.emit(health, max_health)
 
 func _update_hud() -> void:
 	if hud:

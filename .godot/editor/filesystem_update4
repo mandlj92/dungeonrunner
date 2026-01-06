@@ -1,8 +1,2 @@
 res://scenes/main.tscn
 res://scenes/world/run.tscn
-res://scenes/summary.tscn
-res://scenes/ui/HUD.tscn
-res://scenes/player/Player.tscn
-res://scenes/enemies/enemy.tscn
-res://scenes/world/Room.tscn
-res://scripts/enemies/enemy.gd

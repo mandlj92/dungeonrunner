@@ -12,6 +12,10 @@ var _max_hp: int = 100
 func _ready() -> void:
 	add_to_group("hud")
 
+	# Connect to Events signals
+	Events.player_health_changed.connect(_on_player_health_changed)
+	Events.player_damaged.connect(_on_player_damaged)
+
 	# ensure a saved label exists (created lazily on first show)
 	if not has_node("SavedLabel"):
 		var lbl = Label.new()
@@ -106,6 +110,12 @@ func show_saved(text: String = "Saved", duration: float = 1.2) -> void:
 	t2.tween_property(lbl, "modulate:a", 0.0, 0.18)
 	await t2.finished
 	lbl.visible = false
+
+func _on_player_health_changed(current: int, max: int) -> void:
+	set_health(current, max)
+
+func _on_player_damaged() -> void:
+	flash_damage(0.8, 0.25)
 
 func _ensure_damage_flash() -> ColorRect:
 	if has_node("DamageFlash"):

@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://cpi2kspq0yflo"]
+[gd_scene load_steps=10 format=3 uid="uid://cpi2kspq0yflo"]
 
 [ext_resource type="Script" path="res://scripts/world/run_controller.gd" id="1_jgai7"]
 [ext_resource type="PackedScene" uid="uid://cncaqxlg835ci" path="res://scenes/ui/HUD.tscn" id="2_hud"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://b67fupypxpgbl" path="res://scenes/enemies/enemy.tscn" id="4_enemy"]
 [ext_resource type="PackedScene" uid="uid://c8vqm5yh3n7pa" path="res://scenes/pickups/ammo_pickup.tscn" id="5_pickup"]
 [ext_resource type="PackedScene" uid="uid://cal5s08tp75gd" path="res://scenes/world/Room.tscn" id="6_room"]
+[ext_resource type="PackedScene" uid="uid://bx7k8nan0p1qr" path="res://scenes/world/exit_portal.tscn" id="7_portal"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_nm1ua"]
 
@@ -22,6 +23,7 @@ player_scene = ExtResource("3_player")
 enemy_scene = ExtResource("4_enemy")
 pickup_scene = ExtResource("5_pickup")
 room_scene = ExtResource("6_room")
+portal_scene = ExtResource("7_portal")
 
 [node name="World" type="Node3D" parent="."]
 

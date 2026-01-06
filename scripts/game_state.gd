@@ -1,7 +1,5 @@
 extends Node
 
-signal spawn_projectile(scene: PackedScene, spawn_transform: Transform3D, damage: int, shooter: Node)
-
 enum UpgradeType {
 	MAX_HEALTH,
 	MOVE_SPEED,

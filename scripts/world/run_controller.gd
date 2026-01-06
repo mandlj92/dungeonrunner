@@ -13,11 +13,14 @@ extends Node3D
 var player
 
 func _ready() -> void:
+	# Critical asset checks
+	assert(portal_scene != null, "Critical: Portal Scene is not assigned in RunController!")
+
 	randomize()
 	var rng_seed = GameState.new_run_seed()
 
 	# Connect to projectile spawn signal
-	GameState.spawn_projectile.connect(_on_spawn_projectile)
+	Events.spawn_projectile.connect(_on_spawn_projectile)
 
 	# generate dungeon
 	var gen = ProcGen.new()
@@ -72,8 +75,25 @@ func _ready() -> void:
 					# 10% chance to make enemy Elite
 					if randf() < 0.1:
 						_make_elite(e)
+		else:
+			# Fallback: spawn at room center with warning
+			push_warning("No valid floors found for room %d, using fallback spawn position" % i)
+			for enemy_idx in range(enemy_count):
+				var enemy_chance = min(0.8 + (GameState.dungeon_level - 1) * 0.05, 1.0)
+				if randf() < enemy_chance:
+					var e = enemy_scene.instantiate()
+					room.add_child(e)
 
-		# Spawn pickups (use old marker as fallback if no valid floors)
+					# Fallback to room's global position + offset
+					e.global_position = room.global_position + Vector3(0, 1, 0)
+
+					e.initialize(player)
+					_scale_enemy(e, difficulty_scale)
+
+					if randf() < 0.1:
+						_make_elite(e)
+
+		# Spawn pickups
 		if randf() < 0.7:
 			var p = pickup_scene.instantiate()
 			add_child(p)
@@ -82,20 +102,18 @@ func _ready() -> void:
 				var spawn_pos: Vector3 = valid_floors[randi() % valid_floors.size()]
 				p.global_position = spawn_pos + Vector3(0, 1, 0)
 			else:
-				p.global_position = (room.get_node("PickupSpawn") as Marker3D).global_position + Vector3(0, 1, 0)
+				# Fallback for pickups: try marker first, then room center
+				push_warning("No valid floors found for pickup in room %d, using fallback spawn position" % i)
+				if room.has_node("PickupSpawn"):
+					p.global_position = (room.get_node("PickupSpawn") as Marker3D).global_position + Vector3(0, 1, 0)
+				else:
+					p.global_position = room.global_position + Vector3(0, 1, 0)
 
-	# spawn exit portal in final room (use exported scene or fallback to default)
-	var portal_packed: PackedScene = portal_scene
-	if not portal_packed:
-		var fallback_path := "res://scenes/world/exit_portal.tscn"
-		if ResourceLoader.exists(fallback_path):
-			portal_packed = load(fallback_path) as PackedScene
-
-	if portal_packed:
-		var final_room = data["final_room"]
-		var portal = portal_packed.instantiate()
-		add_child(portal)
-		portal.global_position = (final_room.get_node("ExitSpawn") as Marker3D).global_position + Vector3(0,1,0)
+	# spawn exit portal in final room
+	var final_room = data["final_room"]
+	var portal = portal_scene.instantiate()
+	add_child(portal)
+	portal.global_position = (final_room.get_node("ExitSpawn") as Marker3D).global_position + Vector3(0,1,0)
 
 func _get_difficulty_scale() -> Dictionary:
 	var level = GameState.dungeon_level

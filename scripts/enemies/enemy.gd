@@ -186,8 +186,12 @@ func _process_chasing(delta: float) -> void:
 		dir = dir.normalized()
 
 	var speed_scale := 0.15 if _hit_stun_timer > 0.0 else 1.0
-	velocity.x = dir.x * speed * speed_scale
-	velocity.z = dir.z * speed * speed_scale
+
+	# Elite enemies move 20% faster
+	var elite_multiplier := 1.2 if has_meta("is_elite") else 1.0
+
+	velocity.x = dir.x * speed * speed_scale * elite_multiplier
+	velocity.z = dir.z * speed * speed_scale * elite_multiplier
 
 	# Transition to SURROUNDING if in range
 	if dist <= attack_range:
@@ -253,7 +257,11 @@ func _process_attacking(delta: float) -> void:
 func take_damage(amount:int, hit_dir: Vector3 = Vector3.ZERO) -> int:
 	var applied: int = min(amount, health)
 	health -= amount
-	_hit_stun_timer = hit_stun_time
+
+	# Elite enemies ignore hit stun
+	if not has_meta("is_elite"):
+		_hit_stun_timer = hit_stun_time
+
 	if hit_dir != Vector3.ZERO:
 		velocity += hit_dir.normalized() * hit_knockback
 	_flash_on_hit()
