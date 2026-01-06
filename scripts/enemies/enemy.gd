@@ -31,6 +31,9 @@ var player: Node3D
 @export var separation_distance := 2.0
 @export var separation_force := 5.0
 
+@export var hit_sfx: AudioStream
+@export var death_sfx: AudioStream
+
 var _using_fallback := false
 var _state: State = State.SLEEPING
 var _raycast: RayCast3D = null
@@ -38,7 +41,6 @@ var _token_request_timer := 0.0
 const TOKEN_REQUEST_INTERVAL := 0.1
 func _ready() -> void:
 	health = max_health
-	player = get_tree().get_first_node_in_group("player")
 
 	# Debug: print collision shape and agent settings when enabled
 	if debug_ai:
@@ -64,12 +66,14 @@ func _ready() -> void:
 		# ensure agent speed matches exported speed
 		agent.max_speed = speed
 
-	# Configure navigation agent
+	# Configure navigation agent with avoidance enabled
 	agent.path_desired_distance = 0.5
 	agent.target_desired_distance = 0.5
 	agent.max_speed = speed
+	agent.avoidance_enabled = true
+	agent.velocity_computed.connect(_on_velocity_computed)
 
-	# Add to "enemies" group for separation logic
+	# Add to "enemies" group
 	add_to_group("enemies")
 
 	# Create raycast for LOS checks (CRITICAL: mask out other enemies!)
@@ -82,6 +86,9 @@ func _ready() -> void:
 	# Start dormant
 	_state = State.SLEEPING
 	set_physics_process(false)
+
+func initialize(target_node: Node3D) -> void:
+	player = target_node
 
 func wake_up() -> void:
 	if _state != State.SLEEPING:
@@ -104,11 +111,8 @@ func go_dormant() -> void:
 	set_physics_process(false)
 
 func _physics_process(delta: float) -> void:
-	# Ensure player reference
 	if not player:
-		player = get_tree().get_first_node_in_group("player")
-		if not player:
-			return
+		return
 
 	# Update timers
 	_attack_timer = max(0.0, _attack_timer - delta)
@@ -129,8 +133,15 @@ func _physics_process(delta: float) -> void:
 		State.ATTACKING:
 			_process_attacking(delta)
 
-	# Apply gravity and movement
+	# Apply gravity
 	velocity.y += -18.0 * delta
+
+	# Set agent velocity for avoidance computation (don't call move_and_slide here)
+	if agent.avoidance_enabled:
+		agent.velocity = velocity
+
+func _on_velocity_computed(safe_velocity: Vector3) -> void:
+	velocity = safe_velocity
 	move_and_slide()
 
 func _process_chasing(delta: float) -> void:
@@ -200,22 +211,7 @@ func _process_surrounding(delta: float) -> void:
 			_attack_timer = 0.0  # Reset timer so attack happens immediately
 			return
 
-	# Calculate separation from nearby enemies
-	var separation := Vector3.ZERO
-	var nearby_enemies = get_tree().get_nodes_in_group("enemies")
-	for enemy in nearby_enemies:
-		if enemy == self or not is_instance_valid(enemy):
-			continue
-
-		var to_enemy = enemy.global_transform.origin - global_transform.origin
-		to_enemy.y = 0
-		var dist_to_enemy = to_enemy.length()
-
-		if dist_to_enemy < separation_distance and dist_to_enemy > 0.01:
-			var repulsion = -to_enemy.normalized() / dist_to_enemy
-			separation += repulsion * separation_force
-
-	# Continue pathfinding toward player
+	# Continue pathfinding toward player (separation handled by NavigationAgent avoidance)
 	agent.target_position = player.global_transform.origin
 	var nav_target = agent.get_next_path_position()
 	if nav_target == Vector3.ZERO or nav_target.distance_to(global_transform.origin) <= 0.05:
@@ -226,11 +222,8 @@ func _process_surrounding(delta: float) -> void:
 	if nav_dir.length() > 0.05:
 		nav_dir = nav_dir.normalized()
 
-	# Blend navigation + separation
-	var final_dir = (nav_dir + separation).normalized()
-
-	velocity.x = final_dir.x * speed * 0.5  # Slower while surrounding
-	velocity.z = final_dir.z * speed * 0.5
+	velocity.x = nav_dir.x * speed * 0.5  # Slower while surrounding
+	velocity.z = nav_dir.z * speed * 0.5
 
 func _process_attacking(delta: float) -> void:
 	# Execute attack when timer ready
@@ -318,22 +311,19 @@ func _flash_on_hit() -> void:
 	await get_tree().create_timer(flash_time).timeout
 	mesh.set_surface_override_material(0, original_override)
 
+func play_sfx(stream: AudioStream, pitch_min: float = 0.9, pitch_max: float = 1.1) -> void:
+	if not stream:
+		return
+
+	var audio_player := AudioStreamPlayer3D.new()
+	add_child(audio_player)
+	audio_player.stream = stream
+	audio_player.pitch_scale = randf_range(pitch_min, pitch_max)
+	audio_player.play()
+	audio_player.finished.connect(audio_player.queue_free)
+
 func _play_hit_sound() -> void:
-	var player_audio = AudioStreamPlayer3D.new()
-	add_child(player_audio)
-
-	var gen = AudioStreamGenerator.new()
-	gen.mix_rate = 22050
-	player_audio.stream = gen
-	player_audio.play()
-
-	var playback = player_audio.get_stream_playback() as AudioStreamGeneratorPlayback
-	for i in range(1200):
-		var sample = randf_range(-0.3, 0.3) * exp(-i/400.0)
-		playback.push_frame(Vector2(sample, sample))
-
-	await get_tree().create_timer(0.12).timeout
-	player_audio.queue_free()
+	play_sfx(hit_sfx, 0.9, 1.1)
 
 func _spawn_gibs(_pos: Vector3) -> void:
 	for i in range(randi_range(4, 5)):
@@ -427,20 +417,4 @@ func _die() -> void:
 	queue_free()
 
 func _play_death_sound() -> void:
-	var player_audio = AudioStreamPlayer3D.new()
-	add_child(player_audio)
-
-	var gen = AudioStreamGenerator.new()
-	gen.mix_rate = 44100
-	player_audio.stream = gen
-	player_audio.play()
-
-	var playback = player_audio.get_stream_playback() as AudioStreamGeneratorPlayback
-	# High-pitched death sound
-	for i in range(2200):
-		var pitch = 800.0 + (i * 0.5)  # Rising pitch
-		var sample = sin(i * pitch * 0.0001) * exp(-i/600.0) * 0.4
-		playback.push_frame(Vector2(sample, sample))
-
-	await get_tree().create_timer(0.5).timeout
-	player_audio.queue_free()
+	play_sfx(death_sfx, 1.1, 1.3)

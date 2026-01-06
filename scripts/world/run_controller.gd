@@ -16,6 +16,9 @@ func _ready() -> void:
 	randomize()
 	var rng_seed = GameState.new_run_seed()
 
+	# Connect to projectile spawn signal
+	GameState.spawn_projectile.connect(_on_spawn_projectile)
+
 	# generate dungeon
 	var gen = ProcGen.new()
 	gen.room_scene = room_scene
@@ -59,6 +62,9 @@ func _ready() -> void:
 					# Pick random valid floor position
 					var spawn_pos: Vector3 = valid_floors[randi() % valid_floors.size()]
 					e.global_position = spawn_pos + Vector3(0, 1, 0)
+
+					# Initialize with player reference
+					e.initialize(player)
 
 					# Scale enemy stats based on dungeon level
 					_scale_enemy(e, difficulty_scale)
@@ -148,3 +154,11 @@ func _on_player_exited() -> void:
 func _queue_summary_scene_change() -> void:
 	# Defer scene change so we don't remove physics bodies during callbacks (e.g. portal overlap)
 	get_tree().call_deferred("change_scene_to_file", "res://scenes/summary.tscn")
+
+func _on_spawn_projectile(scene: PackedScene, spawn_transform: Transform3D, damage: int, shooter: Node) -> void:
+	var projectile = scene.instantiate()
+	world.add_child(projectile)
+	projectile.global_transform = spawn_transform
+	projectile.direction = -spawn_transform.basis.z
+	projectile.damage = damage
+	projectile.shooter = shooter

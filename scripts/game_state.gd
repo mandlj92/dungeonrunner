@@ -1,5 +1,16 @@
 extends Node
 
+signal spawn_projectile(scene: PackedScene, spawn_transform: Transform3D, damage: int, shooter: Node)
+
+enum UpgradeType {
+	MAX_HEALTH,
+	MOVE_SPEED,
+	MELEE_DAMAGE,
+	GUN_DAMAGE,
+	AMMO_MAX,
+	LIFESTEAL
+}
+
 var coins: int = 0
 var run_seed: int = 0
 var dungeon_level: int = 1  # Current dungeon depth (resets on death)
@@ -7,12 +18,12 @@ var max_dungeon_reached: int = 1  # Highest dungeon ever reached (persistent)
 
 # Meta upgrades (heavy-ish progression MVP)
 var upgrades := {
-	"max_health": 0,     # +10 per level
-	"move_speed": 0,     # +3% per level
-	"melee_damage": 0,   # +10% per level
-	"gun_damage": 0,     # +10% per level
-	"ammo_max": 0,       # +5 per level
-	"lifesteal": 0       # +1% per level (simple)
+	UpgradeType.MAX_HEALTH: 0,     # +10 per level
+	UpgradeType.MOVE_SPEED: 0,     # +3% per level
+	UpgradeType.MELEE_DAMAGE: 0,   # +10% per level
+	UpgradeType.GUN_DAMAGE: 0,     # +10% per level
+	UpgradeType.AMMO_MAX: 0,       # +5 per level
+	UpgradeType.LIFESTEAL: 0       # +1% per level (simple)
 }
 
 const SAVE_PATH := "user://save_game.cfg"
@@ -50,7 +61,14 @@ func reset_run() -> void:
 func save_game(path: String = SAVE_PATH) -> bool:
 	var cfg = ConfigFile.new()
 	cfg.set_value(SAVE_SECTION, "coins", coins)
-	cfg.set_value(SAVE_SECTION, "upgrades", upgrades)
+
+	# Convert enum keys to string keys for saving
+	var upgrades_serialized := {}
+	for upgrade_type in upgrades.keys():
+		var key_name = UpgradeType.keys()[upgrade_type]
+		upgrades_serialized[key_name] = upgrades[upgrade_type]
+	cfg.set_value(SAVE_SECTION, "upgrades", upgrades_serialized)
+
 	cfg.set_value(SAVE_SECTION, "dungeon_level", dungeon_level)
 	cfg.set_value(SAVE_SECTION, "max_dungeon_reached", max_dungeon_reached)
 	cfg.set_value(META_SECTION, "version", 1)
@@ -71,12 +89,17 @@ func load_game(path: String = SAVE_PATH) -> bool:
 		coins = int(cfg.get_value(SAVE_SECTION, "coins", coins))
 		dungeon_level = int(cfg.get_value(SAVE_SECTION, "dungeon_level", 1))
 		max_dungeon_reached = int(cfg.get_value(SAVE_SECTION, "max_dungeon_reached", 1))
-		var u = cfg.get_value(SAVE_SECTION, "upgrades", upgrades)
-		if typeof(u) == TYPE_DICTIONARY:
-			# ensure keys exist and merge
-			for k in upgrades.keys():
-				if u.has(k):
-					upgrades[k] = int(u[k])
+
+		# Load upgrades and convert string keys back to enum keys
+		var loaded_upgrades = cfg.get_value(SAVE_SECTION, "upgrades", {})
+		if typeof(loaded_upgrades) == TYPE_DICTIONARY:
+			for upgrade_type in upgrades.keys():
+				var key_name = UpgradeType.keys()[upgrade_type]
+				if loaded_upgrades.has(key_name):
+					upgrades[upgrade_type] = int(loaded_upgrades[key_name])
+				# Also support legacy string keys for backwards compatibility
+				elif loaded_upgrades.has(key_name.to_lower()):
+					upgrades[upgrade_type] = int(loaded_upgrades[key_name.to_lower()])
 		return true
 	else:
 		# no save yet or load failed
