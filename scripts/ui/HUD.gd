@@ -15,6 +15,18 @@ func _ready() -> void:
 	# Connect to Events signals
 	Events.player_health_changed.connect(_on_player_health_changed)
 	Events.player_damaged.connect(_on_player_damaged)
+	Events.player_damage_flash_requested.connect(_on_damage_flash_requested)
+	Events.player_rage_mode_changed.connect(_on_rage_mode_changed)
+
+	# Connect to player for real-time updates
+	var player = get_tree().get_first_node_in_group("player")
+	if player:
+		if player.has_signal("run_time_updated"):
+			player.run_time_updated.connect(_on_run_time_updated)
+		# Connect to component signals if they exist
+		if player.has_node("WeaponController"):
+			var weapon = player.get_node("WeaponController")
+			weapon.ammo_changed.connect(_on_ammo_changed)
 
 	# ensure a saved label exists (created lazily on first show)
 	if not has_node("SavedLabel"):
@@ -116,6 +128,26 @@ func _on_player_health_changed(current: int, max: int) -> void:
 
 func _on_player_damaged() -> void:
 	flash_damage(0.8, 0.25)
+
+func _on_damage_flash_requested(intensity: float, duration: float) -> void:
+	flash_damage(intensity, duration)
+
+func _on_rage_mode_changed(active: bool, opacity: float) -> void:
+	if not damage_flash:
+		return
+
+	if active:
+		damage_flash.visible = true
+		damage_flash.modulate = Color(1, 0, 0, opacity)
+	else:
+		damage_flash.visible = false
+		damage_flash.modulate = Color(1, 0, 0, 0)
+
+func _on_run_time_updated(time: float) -> void:
+	set_time(time)
+
+func _on_ammo_changed(current: int, maximum: int) -> void:
+	set_ammo(current, maximum)
 
 func _ensure_damage_flash() -> ColorRect:
 	if has_node("DamageFlash"):

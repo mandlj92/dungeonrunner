@@ -6,14 +6,6 @@ extends CharacterBody3D
 @export var jump_velocity := 8.0
 @export var gravity := 18.0
 
-@export var base_max_health := 100
-var max_health := 100
-var health := 100
-
-@export var base_ammo_max := 30
-var ammo_max := 30
-var ammo := 30
-
 @export var fall_death_threshold := -20.0
 @export var fall_death_time := 5.0
 var _fall_timer := 0.0
@@ -24,51 +16,57 @@ var _coyote_timer := 0.0
 const FOV_BASE := 75.0
 const FOV_SPRINT := 85.0
 
-@export var gun_damage := 10
-@export var melee_damage := 20
-@export var fire_cooldown := 0.15
-@export var melee_cooldown := 0.5
-@export var projectile_scene: PackedScene
-
-@export var hurt_invuln_time := 0.6
 @export var hurt_knockback := 7.0
 @export var hurt_flash_time := 0.25
-@export var debug_melee := false
 
-@export var shoot_sfx: AudioStream
-@export var hit_sfx: AudioStream
 @export var damage_sfx: AudioStream
 
-var _fire_timer := 0.0
-var _melee_timer := 0.0
 var _run_time := 0.0
 var _shake_remaining := 0.0
 var _shake_intensity := 0.0
 var _original_cam_position: Vector3
-var _invuln_timer := 0.0
 var _rage_mode_active := false
 var _rage_timer := 0.0
-var _original_fire_cooldown := 0.0
 var _mouse_input: Vector2 = Vector2.ZERO
 
 @onready var head := $Head
 @onready var cam := $Head/Camera3D
 @onready var hitscan := $Head/RayCast3D
-@onready var melee_area := $MeleeArea
-@onready var hud := get_tree().get_first_node_in_group("hud")
+@onready var health_component := $HealthComponent as HealthComponent
+@onready var weapon_controller := $WeaponController as WeaponController
+@onready var melee_controller := $MeleeController as MeleeController
 
 var pause_menu: Control
 
 signal died
 signal exited
+signal run_time_updated(time: float)
 
 func _ready() -> void:
 	add_to_group("player")
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	_original_cam_position = cam.position
-	_original_fire_cooldown = fire_cooldown
+
+	# Setup components
+	if weapon_controller:
+		weapon_controller.setup(cam, hitscan, self)
+		weapon_controller.fired.connect(_on_weapon_fired)
+		weapon_controller.ammo_changed.connect(_on_ammo_changed)
+
+	if melee_controller:
+		melee_controller.setup(cam, self)
+		melee_controller.hit_landed.connect(_on_melee_hit_landed)
+
+	if health_component:
+		health_component.damaged.connect(_on_damaged)
+		health_component.died.connect(_on_died)
+		health_component.health_changed.connect(_on_health_changed)
+
 	_apply_meta_upgrades()
-	_update_hud()
+
+	# Emit initial health state via Events
+	if health_component:
+		Events.player_health_changed.emit(health_component.health, health_component.max_health)
 
 	# Create pause menu
 	var pause_scene = load("res://scenes/ui/pause_menu.tscn")
@@ -76,15 +74,24 @@ func _ready() -> void:
 	add_child(pause_menu)
 
 func _apply_meta_upgrades() -> void:
-	max_health = base_max_health + (GameState.upgrades[GameState.UpgradeType.MAX_HEALTH] * 10)
-	health = max_health
+	if health_component:
+		var base_max_health = 100
+		health_component.max_health = base_max_health + (GameState.upgrades[GameState.UpgradeType.MAX_HEALTH] * 10)
+		health_component.health = health_component.max_health
 
-	ammo_max = base_ammo_max + (GameState.upgrades[GameState.UpgradeType.AMMO_MAX] * 5)
-	ammo = ammo_max
+	if weapon_controller:
+		var base_ammo_max = 30
+		weapon_controller.ammo_max = base_ammo_max + (GameState.upgrades[GameState.UpgradeType.AMMO_MAX] * 5)
+		weapon_controller.ammo = weapon_controller.ammo_max
+
+		var base_gun_damage = 10
+		weapon_controller.damage = int(base_gun_damage * (1.0 + 0.10 * GameState.upgrades[GameState.UpgradeType.GUN_DAMAGE]))
+
+	if melee_controller:
+		var base_melee_damage = 20
+		melee_controller.damage = int(base_melee_damage * (1.0 + 0.10 * GameState.upgrades[GameState.UpgradeType.MELEE_DAMAGE]))
 
 	base_speed *= (1.0 + 0.03 * GameState.upgrades[GameState.UpgradeType.MOVE_SPEED])
-	melee_damage = int(melee_damage * (1.0 + 0.10 * GameState.upgrades[GameState.UpgradeType.MELEE_DAMAGE]))
-	gun_damage = int(gun_damage * (1.0 + 0.10 * GameState.upgrades[GameState.UpgradeType.GUN_DAMAGE]))
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
@@ -99,9 +106,8 @@ func _input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	_run_time += delta
-	_fire_timer = max(0.0, _fire_timer - delta)
-	_melee_timer = max(0.0, _melee_timer - delta)
-	_invuln_timer = max(0.0, _invuln_timer - delta)
+	run_time_updated.emit(_run_time)
+
 	_update_rage_mode(delta)
 	_update_screen_shake(delta)
 
@@ -159,56 +165,27 @@ func _physics_process(delta: float) -> void:
 	else:
 		_fall_timer = 0.0
 
-	if Input.is_action_pressed("fire"):
-		_try_fire()
+	if Input.is_action_pressed("fire") and weapon_controller:
+		weapon_controller.try_fire()
 
-	if Input.is_action_pressed("melee"):
-		_try_melee()
+	if Input.is_action_pressed("melee") and melee_controller:
+		melee_controller.try_melee()
 
-	if hud:
-		hud.set_time(_run_time)
+# Signal handlers for components
+func _on_weapon_fired(spawn_transform: Transform3D, damage_amount: int) -> void:
+	# Forward to Events autoload for projectile spawning
+	if weapon_controller and weapon_controller.projectile_scene:
+		Events.spawn_projectile.emit(weapon_controller.projectile_scene, spawn_transform, damage_amount, self)
 
-func _try_fire() -> void:
-	if _fire_timer > 0.0: return
-	if ammo <= 0: return
-	if not projectile_scene: return
-	_fire_timer = fire_cooldown
-	ammo -= 1
+func _on_ammo_changed(current: int, maximum: int) -> void:
+	# Can be connected by HUD via Events or directly
+	pass
 
-	_spawn_muzzle_flash()
-	_play_gun_sound()
+func _on_melee_hit_landed(target: Node, damage_dealt: int) -> void:
+	on_attack_landed(damage_dealt)
 
-	# Create spawn transform
-	var spawn_transform := Transform3D()
-	spawn_transform.origin = hitscan.global_position
-	spawn_transform.basis = cam.global_transform.basis
-
-	# Emit signal to spawn projectile
-	Events.spawn_projectile.emit(projectile_scene, spawn_transform, gun_damage, self)
-
-	_update_hud()
-
-func _try_melee() -> void:
-	if _melee_timer > 0.0: return
-	_melee_timer = melee_cooldown
-
-	_melee_swing_visual()
-	var overlaps = melee_area.get_overlapping_bodies()
-	if debug_melee:
-		print("[Melee] overlaps count:", overlaps.size(), "area mask:", melee_area.collision_mask)
-	for body in overlaps:
-		if debug_melee:
-			if body:
-				print("[Melee] found:", body.name, "class:", body.get_class(), "layer:", body.collision_layer, "mask:", body.collision_mask)
-		if body and body.has_method("take_damage"):
-			var dealt := melee_damage
-			var res = body.take_damage(melee_damage, -cam.global_transform.basis.z)
-			if typeof(res) == TYPE_INT:
-				dealt = res
-			on_attack_landed(dealt)
-			_play_hit_sound()
-
-	_update_hud()
+	# Add hit-stop for impact feel
+	GameState.hit_stop(0.05, 0.1)
 
 func on_attack_landed(damage_dealt: int) -> void:
 	_apply_lifesteal(damage_dealt)
@@ -221,49 +198,35 @@ func _apply_lifesteal(damage_dealt: int) -> void:
 		heal_amount = 1
 	heal(heal_amount)
 
-func take_damage(amount: int, hit_dir: Vector3 = Vector3.ZERO) -> void:
-	if _invuln_timer > 0.0:
-		return
-	_invuln_timer = hurt_invuln_time
-	health -= amount
+func _on_damaged(amount: int, hit_dir: Vector3) -> void:
 	if hit_dir != Vector3.ZERO:
 		var dir := hit_dir.normalized()
 		velocity += dir * hurt_knockback
+
 	_screen_shake(0.3, 0.45)
 	_play_damage_sound()
 	Events.player_damaged.emit()
-	if hud and hud.has_method("flash_damage"):
-		hud.flash_damage(0.8, hurt_flash_time)
-	if health <= 0:
-		health = 0
-		Events.player_health_changed.emit(health, max_health)
-		died.emit()
-	else:
-		Events.player_health_changed.emit(health, max_health)
 
-func add_ammo(amount:int) -> void:
-	ammo = clamp(ammo + amount, 0, ammo_max)
-	_update_hud()
+	# Signal HUD to flash damage (HUD should connect to Events)
+	Events.player_damage_flash_requested.emit(0.8, hurt_flash_time)
 
-func heal(amount:int) -> void:
-	health = clamp(health + amount, 0, max_health)
-	Events.player_health_changed.emit(health, max_health)
+func _on_died() -> void:
+	died.emit()
 
-func _update_hud() -> void:
-	if hud:
-		hud.set_health(health, max_health)
-		hud.set_ammo(ammo, ammo_max)
-		hud.set_coins(GameState.coins)
+func _on_health_changed(current: int, maximum: int) -> void:
+	Events.player_health_changed.emit(current, maximum)
 
-func _spawn_muzzle_flash() -> void:
-	var flash = OmniLight3D.new()
-	hitscan.add_child(flash)
-	flash.light_energy = 3.0
-	flash.light_color = Color(1.0, 0.8, 0.3)
-	flash.omni_range = 5.0
+func take_damage(amount: int, hit_dir: Vector3 = Vector3.ZERO) -> void:
+	if health_component:
+		health_component.take_damage(amount, hit_dir)
 
-	await get_tree().create_timer(0.05).timeout
-	flash.queue_free()
+func add_ammo(amount: int) -> void:
+	if weapon_controller:
+		weapon_controller.add_ammo(amount)
+
+func heal(amount: int) -> void:
+	if health_component:
+		health_component.heal(amount)
 
 func _screen_shake(duration: float, intensity: float) -> void:
 	_shake_remaining = duration
@@ -284,10 +247,8 @@ func _update_screen_shake(delta: float) -> void:
 	else:
 		cam.position = _original_cam_position
 
-func _melee_swing_visual() -> void:
-	var tween = create_tween()
-	tween.tween_property(cam, "position", cam.position + Vector3(0, 0, -0.3), 0.1)
-	tween.tween_property(cam, "position", _original_cam_position, 0.2)
+func _play_damage_sound() -> void:
+	play_sfx(damage_sfx, 0.95, 1.05)
 
 func play_sfx(stream: AudioStream, pitch_min: float = 0.9, pitch_max: float = 1.1) -> void:
 	if not stream:
@@ -300,27 +261,16 @@ func play_sfx(stream: AudioStream, pitch_min: float = 0.9, pitch_max: float = 1.
 	audio_player.play()
 	audio_player.finished.connect(audio_player.queue_free)
 
-func _play_gun_sound() -> void:
-	play_sfx(shoot_sfx, 0.95, 1.05)
-
-func _play_hit_sound() -> void:
-	play_sfx(hit_sfx, 0.9, 1.1)
-
-func _play_damage_sound() -> void:
-	play_sfx(damage_sfx, 0.95, 1.05)
-
 func activate_rage_mode(duration: float) -> void:
 	_rage_mode_active = true
 	_rage_timer = duration
 
 	# Reduce fire_cooldown by 50%
-	fire_cooldown = _original_fire_cooldown * 0.5
+	if weapon_controller:
+		weapon_controller.apply_rage_mode(0.5)
 
-	# Tint DamageFlash to low-opacity Red
-	if hud and hud.has_node("DamageFlash"):
-		var damage_flash = hud.get_node("DamageFlash")
-		damage_flash.visible = true
-		damage_flash.modulate = Color(1, 0, 0, 0.15)
+	# Request HUD to show rage mode effect
+	Events.player_rage_mode_changed.emit(true, 0.15)
 
 func _update_rage_mode(delta: float) -> void:
 	if not _rage_mode_active:
@@ -335,10 +285,8 @@ func _deactivate_rage_mode() -> void:
 	_rage_timer = 0.0
 
 	# Reset fire_cooldown
-	fire_cooldown = _original_fire_cooldown
+	if weapon_controller:
+		weapon_controller.reset_fire_rate()
 
-	# Clear DamageFlash tint
-	if hud and hud.has_node("DamageFlash"):
-		var damage_flash = hud.get_node("DamageFlash")
-		damage_flash.visible = false
-		damage_flash.modulate = Color(1, 0, 0, 0)
+	# Clear rage mode effect
+	Events.player_rage_mode_changed.emit(false, 0.0)

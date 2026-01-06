@@ -10,3 +10,7 @@ signal spawn_projectile(scene: PackedScene, spawn_transform: Transform3D, damage
 signal player_health_changed(current: int, max: int)
 signal player_damaged
 signal player_died
+
+# UI request signals
+signal player_damage_flash_requested(intensity: float, duration: float)
+signal player_rage_mode_changed(active: bool, opacity: float)

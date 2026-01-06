@@ -2,21 +2,21 @@ extends Control
 
 # Upgrade costs scale with level: base_cost * (1 + level)
 const UPGRADE_COSTS := {
-	"max_health": 10,
-	"move_speed": 15,
-	"melee_damage": 12,
-	"gun_damage": 12,
-	"ammo_max": 8,
-	"lifesteal": 20
+	GameState.UpgradeType.MAX_HEALTH: 10,
+	GameState.UpgradeType.MOVE_SPEED: 15,
+	GameState.UpgradeType.MELEE_DAMAGE: 12,
+	GameState.UpgradeType.GUN_DAMAGE: 12,
+	GameState.UpgradeType.AMMO_MAX: 8,
+	GameState.UpgradeType.LIFESTEAL: 20
 }
 
 const UPGRADE_LABELS := {
-	"max_health": "Max Health (+10)",
-	"move_speed": "Move Speed (+3%)",
-	"melee_damage": "Melee Damage (+10%)",
-	"gun_damage": "Gun Damage (+10%)",
-	"ammo_max": "Ammo Capacity (+5)",
-	"lifesteal": "Lifesteal (+1%)"
+	GameState.UpgradeType.MAX_HEALTH: "Max Health (+10)",
+	GameState.UpgradeType.MOVE_SPEED: "Move Speed (+3%)",
+	GameState.UpgradeType.MELEE_DAMAGE: "Melee Damage (+10%)",
+	GameState.UpgradeType.GUN_DAMAGE: "Gun Damage (+10%)",
+	GameState.UpgradeType.AMMO_MAX: "Ammo Capacity (+5)",
+	GameState.UpgradeType.LIFESTEAL: "Lifesteal (+1%)"
 }
 
 @onready var title_label := $VBoxContainer/TitleLabel
@@ -39,29 +39,31 @@ func _ready() -> void:
 		start_button.text = "Enter Next Dungeon"
 
 func _create_upgrade_buttons() -> void:
-	for key in UPGRADE_COSTS.keys():
+	for upgrade_type in UPGRADE_COSTS.keys():
 		var btn = Button.new()
-		btn.name = key
-		btn.pressed.connect(_on_upgrade_pressed.bind(key))
+		# Use enum name as button name (convert enum value to string)
+		btn.name = GameState.UpgradeType.keys()[upgrade_type]
+		btn.pressed.connect(_on_upgrade_pressed.bind(upgrade_type))
 		upgrade_grid.add_child(btn)
 
 func _update_display() -> void:
 	level_label.text = "Dungeon Level %d (Best: %d)" % [GameState.dungeon_level, GameState.max_dungeon_reached]
 	coins_label.text = "Coins: %d" % GameState.coins
-	for key in UPGRADE_COSTS.keys():
-		var btn = upgrade_grid.get_node(key) as Button
-		var level = GameState.upgrades[key]
-		var cost = _get_cost(key)
-		btn.text = "%s [Lv%d] - %d coins" % [UPGRADE_LABELS[key], level, cost]
+	for upgrade_type in UPGRADE_COSTS.keys():
+		# Get button by enum name
+		var btn = upgrade_grid.get_node(GameState.UpgradeType.keys()[upgrade_type]) as Button
+		var level = GameState.upgrades[upgrade_type]
+		var cost = _get_cost(upgrade_type)
+		btn.text = "%s [Lv%d] - %d coins" % [UPGRADE_LABELS[upgrade_type], level, cost]
 		btn.disabled = (GameState.coins < cost)
 
-func _get_cost(key: String) -> int:
-	return UPGRADE_COSTS[key] * (1 + GameState.upgrades[key])
+func _get_cost(upgrade_type: GameState.UpgradeType) -> int:
+	return UPGRADE_COSTS[upgrade_type] * (1 + GameState.upgrades[upgrade_type])
 
-func _on_upgrade_pressed(key: String) -> void:
-	var cost = _get_cost(key)
+func _on_upgrade_pressed(upgrade_type: GameState.UpgradeType) -> void:
+	var cost = _get_cost(upgrade_type)
 	if GameState.spend_coins(cost):
-		GameState.upgrades[key] += 1
+		GameState.upgrades[upgrade_type] += 1
 		# persist upgrade immediately
 		if GameState.has_method("save_game"):
 			GameState.save_game()

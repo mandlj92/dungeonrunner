@@ -28,6 +28,8 @@ const SAVE_PATH := "user://save_game.cfg"
 const SAVE_SECTION := "progress"
 const META_SECTION := "meta"
 const SAVE_SLOTS := 3
+const SAVE_ENCRYPTION_KEY := "dungeon_run_v1_save_protection"  # Change this for your game
+const CHECKSUM_SECTION := "integrity"
 
 func _ready() -> void:
 	load_game()
@@ -70,7 +72,13 @@ func save_game(path: String = SAVE_PATH) -> bool:
 	cfg.set_value(SAVE_SECTION, "dungeon_level", dungeon_level)
 	cfg.set_value(SAVE_SECTION, "max_dungeon_reached", max_dungeon_reached)
 	cfg.set_value(META_SECTION, "version", 1)
-	var err = cfg.save(path)
+
+	# Calculate and store checksum to prevent simple tampering
+	var checksum := _calculate_save_checksum(coins, upgrades_serialized, dungeon_level, max_dungeon_reached)
+	cfg.set_value(CHECKSUM_SECTION, "hash", checksum)
+
+	# Save with encryption for basic tamper protection
+	var err = cfg.save_encrypted_pass(path, SAVE_ENCRYPTION_KEY)
 	if err != OK:
 		push_error("Failed to save game state: %s" % str(err))
 		return false
@@ -82,22 +90,48 @@ func save_game(path: String = SAVE_PATH) -> bool:
 
 func load_game(path: String = SAVE_PATH) -> bool:
 	var cfg = ConfigFile.new()
-	var err = cfg.load(path)
+	# Try to load encrypted save first
+	var err = cfg.load_encrypted_pass(path, SAVE_ENCRYPTION_KEY)
+
+	# Fallback to unencrypted for backwards compatibility with old saves
+	if err != OK:
+		err = cfg.load(path)
+
 	if err == OK:
-		coins = int(cfg.get_value(SAVE_SECTION, "coins", coins))
-		dungeon_level = int(cfg.get_value(SAVE_SECTION, "dungeon_level", 1))
-		max_dungeon_reached = int(cfg.get_value(SAVE_SECTION, "max_dungeon_reached", 1))
+		var loaded_coins = int(cfg.get_value(SAVE_SECTION, "coins", coins))
+		var loaded_dungeon_level = int(cfg.get_value(SAVE_SECTION, "dungeon_level", 1))
+		var loaded_max_dungeon = int(cfg.get_value(SAVE_SECTION, "max_dungeon_reached", 1))
 
 		# Load upgrades and convert string keys back to enum keys
 		var loaded_upgrades = cfg.get_value(SAVE_SECTION, "upgrades", {})
+		var loaded_upgrades_dict := {}
+
 		if typeof(loaded_upgrades) == TYPE_DICTIONARY:
 			for upgrade_type in upgrades.keys():
 				var key_name = UpgradeType.keys()[upgrade_type]
 				if loaded_upgrades.has(key_name):
-					upgrades[upgrade_type] = int(loaded_upgrades[key_name])
+					loaded_upgrades_dict[upgrade_type] = int(loaded_upgrades[key_name])
 				# Also support legacy string keys for backwards compatibility
 				elif loaded_upgrades.has(key_name.to_lower()):
-					upgrades[upgrade_type] = int(loaded_upgrades[key_name.to_lower()])
+					loaded_upgrades_dict[upgrade_type] = int(loaded_upgrades[key_name.to_lower()])
+				else:
+					loaded_upgrades_dict[upgrade_type] = 0
+
+		# Verify checksum if it exists
+		var stored_checksum = cfg.get_value(CHECKSUM_SECTION, "hash", "")
+		if stored_checksum != "":
+			var calculated_checksum = _calculate_save_checksum(loaded_coins, loaded_upgrades, loaded_dungeon_level, loaded_max_dungeon)
+			if stored_checksum != calculated_checksum:
+				push_warning("Save file checksum mismatch - possible tampering detected. Loading with caution.")
+				# You could choose to reject the save here, or just warn
+
+		# Apply loaded values
+		coins = loaded_coins
+		dungeon_level = loaded_dungeon_level
+		max_dungeon_reached = loaded_max_dungeon
+		for upgrade_type in loaded_upgrades_dict.keys():
+			upgrades[upgrade_type] = loaded_upgrades_dict[upgrade_type]
+
 		return true
 	else:
 		# no save yet or load failed
@@ -149,3 +183,23 @@ func hit_stop(time_scale: float, duration: float) -> void:
 	Engine.time_scale = time_scale
 	await get_tree().create_timer(duration, true, false, true).timeout
 	Engine.time_scale = 1.0
+
+# ---------- Save Integrity ----------
+func _calculate_save_checksum(coin_count: int, upgrade_dict: Dictionary, dungeon_lvl: int, max_dungeon: int) -> String:
+	# Create a deterministic string representation of save data
+	var data_string := "%d|%d|%d" % [coin_count, dungeon_lvl, max_dungeon]
+
+	# Add upgrades in sorted order for consistency
+	var upgrade_keys := upgrade_dict.keys()
+	upgrade_keys.sort()
+	for key in upgrade_keys:
+		data_string += "|%s:%s" % [key, upgrade_dict[key]]
+
+	# Hash the data using SHA-256
+	var ctx = HashingContext.new()
+	ctx.start(HashingContext.HASH_SHA256)
+	ctx.update(data_string.to_utf8_buffer())
+	var hash := ctx.finish()
+
+	# Convert to hex string
+	return hash.hex_encode()
