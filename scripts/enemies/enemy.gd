@@ -85,8 +85,10 @@ func _ready() -> void:
 
 func wake_up() -> void:
 	if _state != State.SLEEPING:
+		print("[Enemy] ", name, " already awake (state: ", State.keys()[_state], ")")
 		return
 
+	print("[Enemy] ", name, " waking up!")
 	_state = State.CHASING
 	set_physics_process(true)
 
@@ -195,7 +197,7 @@ func _process_surrounding(delta: float) -> void:
 		_token_request_timer = TOKEN_REQUEST_INTERVAL
 		if AttackManager.request_attack(self):
 			_state = State.ATTACKING
-			_attack_timer = attack_cooldown
+			_attack_timer = 0.0  # Reset timer so attack happens immediately
 			return
 
 	# Calculate separation from nearby enemies
@@ -233,15 +235,18 @@ func _process_surrounding(delta: float) -> void:
 func _process_attacking(delta: float) -> void:
 	# Execute attack when timer ready
 	if _attack_timer <= 0.0:
-		if player.has_method("take_damage"):
+		if player and player.has_method("take_damage"):
 			var hit_dir = (player.global_transform.origin - global_transform.origin).normalized()
 			player.take_damage(damage, hit_dir)
+			print("[Enemy] ", name, " attacked player for ", damage, " damage!")
 
+		# Start cooldown after attack
 		_attack_timer = attack_cooldown
 
-	# Wait for cooldown
-	if _attack_timer <= delta:  # About to finish
-		# Return token
+	# Check if cooldown is complete
+	if _attack_timer > 0.0 and _attack_timer <= delta:
+		# Cooldown just finished
+		print("[Enemy] ", name, " attack cooldown complete, returning token")
 		AttackManager.return_attack(self)
 
 		# Check distance for next state

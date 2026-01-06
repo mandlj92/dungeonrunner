@@ -23,6 +23,14 @@ func _find_activation_zone() -> Area3D:
 	return null
 
 func _cache_child_methods() -> void:
+	# Need to recursively check all descendants, not just direct children
+	# because enemies are added dynamically after _ready()
+	pass
+
+func _refresh_enemy_cache() -> void:
+	_children_with_wakeup.clear()
+	_children_with_dormant.clear()
+
 	for child in get_children():
 		if child.has_method("wake_up"):
 			_children_with_wakeup.append(child)
@@ -31,10 +39,12 @@ func _cache_child_methods() -> void:
 
 func _on_activation_entered(body: Node3D) -> void:
 	if body.is_in_group("player"):
+		print("[Room] Player entered room: ", name)
 		_activate_room()
 
 func _on_activation_exited(body: Node3D) -> void:
 	if body.is_in_group("player"):
+		print("[Room] Player exited room: ", name)
 		_deactivate_room()
 
 func _activate_room() -> void:
@@ -43,8 +53,14 @@ func _activate_room() -> void:
 
 	_is_active = true
 
+	# Refresh cache in case enemies were added after _ready()
+	_refresh_enemy_cache()
+
+	print("[Room] Activating ", name, " with ", _children_with_wakeup.size(), " enemies")
+
 	for child in _children_with_wakeup:
 		if is_instance_valid(child):
+			print("[Room] Waking up enemy: ", child.name)
 			child.wake_up()
 
 func _deactivate_room() -> void:
@@ -52,6 +68,9 @@ func _deactivate_room() -> void:
 		return
 
 	_is_active = false
+
+	# Refresh cache before deactivating
+	_refresh_enemy_cache()
 
 	for child in _children_with_dormant:
 		if is_instance_valid(child):
