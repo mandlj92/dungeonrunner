@@ -8,9 +8,17 @@ extends Area3D
 var direction := Vector3.ZERO
 var _time_alive := 0.0
 var shooter: Node3D
+var can_pierce := false
+var pierce_count := 0
+var max_pierce := 2
+var _pierced_enemies := []  # Track enemies we've already hit
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
+
+func set_pierce_count(count: int) -> void:
+	can_pierce = true
+	max_pierce = count
 
 func _physics_process(delta: float) -> void:
 	global_position += direction * speed * delta
@@ -23,6 +31,11 @@ func _on_body_entered(body: Node3D) -> void:
 	# Ignore the shooter
 	if body == shooter:
 		return
+
+	# Ignore enemies we've already pierced
+	if can_pierce and body in _pierced_enemies:
+		return
+
 	if debug_projectile:
 		if body:
 			print("[Projectile] hit:", body.name, "class:", body.get_class(), "layer:", body.collision_layer, "mask:", body.collision_mask)
@@ -34,15 +47,32 @@ func _on_body_entered(body: Node3D) -> void:
 
 	# Deal damage with hit stop
 	var dealt := damage
+	var is_enemy := false
 	if body and body.has_method("take_damage"):
+		is_enemy = true
 		await GameState.hit_stop(0.05, 0.1)
 		var res = body.take_damage(damage, direction)
 		if typeof(res) == TYPE_INT:
 			dealt = res
+
+		# Emit enemy_shot signal for upgrades like Vampire Bullets
+		Events.enemy_shot.emit(body)
+
 	if shooter and shooter.has_method("on_attack_landed"):
 		shooter.on_attack_landed(dealt)
 
-	queue_free()
+	# Handle piercing
+	if can_pierce and is_enemy:
+		_pierced_enemies.append(body)
+		pierce_count += 1
+
+		# Only destroy if we've hit max pierce count or hit a wall
+		if pierce_count >= max_pierce:
+			queue_free()
+		# Continue flying if we can still pierce
+	else:
+		# No pierce, destroy on hit
+		queue_free()
 
 func _spawn_hit_particles(pos: Vector3) -> void:
 	var particles = CPUParticles3D.new()

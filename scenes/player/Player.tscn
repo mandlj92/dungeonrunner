@@ -1,34 +1,17 @@
-[gd_scene load_steps=5 format=3 uid="uid://dji0q3jquip4f"]
+[gd_scene load_steps=8 format=3 uid="uid://dji0q3jquip4f"]
 
 [ext_resource type="Script" path="res://scripts/player/player.gd" id="1_player"]
+[ext_resource type="Script" path="res://scripts/components/health_component.gd" id="2_ed480"]
 [ext_resource type="PackedScene" uid="uid://cy7k8kam5n3pq" path="res://scenes/projectile.tscn" id="2_fx3ph"]
+[ext_resource type="Script" path="res://scripts/components/weapon_controller.gd" id="3_tbnjq"]
+[ext_resource type="Script" path="res://scripts/components/melee_controller.gd" id="5_t8400"]
+[ext_resource type="Script" path="res://scripts/upgrades/upgrade_manager.gd" id="6_31gii"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_xk1af"]
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_wobrk"]
-size = Vector3(2, 2, 2)
 
 [node name="Player" type="CharacterBody3D"]
 collision_mask = 3
 script = ExtResource("1_player")
-base_speed = null
-sprint_mult = null
-mouse_sens = null
-jump_velocity = null
-gravity = null
-base_max_health = null
-base_ammo_max = null
-fall_death_threshold = null
-fall_death_time = null
-gun_damage = null
-melee_damage = null
-fire_cooldown = null
-melee_cooldown = null
-projectile_scene = ExtResource("2_fx3ph")
-hurt_invuln_time = null
-hurt_knockback = null
-hurt_flash_time = null
-debug_melee = null
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
@@ -44,12 +27,19 @@ current = true
 target_position = Vector3(0, 0, -100)
 collision_mask = 2
 
-[node name="MeleeArea" type="Area3D" parent="."]
-collision_layer = 0
-collision_mask = 2
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="MeleeArea"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -1.5)
-shape = SubResource("BoxShape3D_wobrk")
-
 [node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="."]
+
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("2_ed480")
+invulnerability_time = 0.6
+knockback_strength = 7.0
+
+[node name="WeaponController" type="Node" parent="."]
+script = ExtResource("3_tbnjq")
+projectile_scene = ExtResource("2_fx3ph")
+
+[node name="MeleeController" type="Node" parent="."]
+script = ExtResource("5_t8400")
+
+[node name="UpgradeManager" type="Node" parent="."]
+script = ExtResource("6_31gii")

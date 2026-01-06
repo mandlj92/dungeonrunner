@@ -34,7 +34,6 @@ var player: Node3D
 @export var hit_sfx: AudioStream
 @export var death_sfx: AudioStream
 
-var _using_fallback := false
 var _state: State = State.SLEEPING
 var _raycast: RayCast3D = null
 var _token_request_timer := 0.0
@@ -144,7 +143,7 @@ func _on_velocity_computed(safe_velocity: Vector3) -> void:
 	velocity = safe_velocity
 	move_and_slide()
 
-func _process_chasing(delta: float) -> void:
+func _process_chasing(_delta: float) -> void:
 	var dist = global_transform.origin.distance_to(player.global_transform.origin)
 
 	# Check aggro range

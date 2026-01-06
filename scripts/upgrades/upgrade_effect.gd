@@ -41,7 +41,7 @@ func trigger(context: Dictionary = {}) -> void:
 	_on_triggered(context)
 
 ## Override this in derived classes
-func _on_triggered(context: Dictionary) -> void:
+func _on_triggered(_context: Dictionary) -> void:
 	pass
 
 ## Called when the upgrade is removed

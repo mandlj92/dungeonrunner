@@ -53,6 +53,16 @@ func _on_upgrade_pressed(upgrade_type: GameState.UpgradeType) -> void:
 	var cost = _get_cost(upgrade_type)
 	if GameState.spend_coins(cost):
 		GameState.upgrades[upgrade_type] += 1
+
+		# Apply behavioral upgrades if applicable
+		if GameState.is_behavioral_upgrade(upgrade_type):
+			var player = get_tree().get_first_node_in_group("player")
+			if player and player.has_node("UpgradeManager"):
+				var upgrade_manager = player.get_node("UpgradeManager")
+				var upgrade_script = GameState.get_upgrade_script(upgrade_type)
+				if upgrade_script:
+					upgrade_manager.add_upgrade(upgrade_script)
+
 		# persist upgrade immediately
 		if GameState.has_method("save_game"):
 			GameState.save_game()

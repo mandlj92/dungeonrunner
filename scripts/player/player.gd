@@ -177,11 +177,11 @@ func _on_weapon_fired(spawn_transform: Transform3D, damage_amount: int) -> void:
 	if weapon_controller and weapon_controller.projectile_scene:
 		Events.spawn_projectile.emit(weapon_controller.projectile_scene, spawn_transform, damage_amount, self)
 
-func _on_ammo_changed(current: int, maximum: int) -> void:
+func _on_ammo_changed(_current: int, _maximum: int) -> void:
 	# Can be connected by HUD via Events or directly
 	pass
 
-func _on_melee_hit_landed(target: Node, damage_dealt: int) -> void:
+func _on_melee_hit_landed(_target: Node, damage_dealt: int) -> void:
 	on_attack_landed(damage_dealt)
 
 	# Add hit-stop for impact feel
@@ -198,7 +198,7 @@ func _apply_lifesteal(damage_dealt: int) -> void:
 		heal_amount = 1
 	heal(heal_amount)
 
-func _on_damaged(amount: int, hit_dir: Vector3) -> void:
+func _on_damaged(_amount: int, hit_dir: Vector3) -> void:
 	if hit_dir != Vector3.ZERO:
 		var dir := hit_dir.normalized()
 		velocity += dir * hurt_knockback

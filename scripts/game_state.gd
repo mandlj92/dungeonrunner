@@ -101,6 +101,10 @@ func save_game(path: String = SAVE_PATH) -> bool:
 		return true
 
 func load_game(path: String = SAVE_PATH) -> bool:
+	# Check if save file exists first to avoid error spam
+	if not FileAccess.file_exists(path):
+		return false
+
 	var cfg = ConfigFile.new()
 	# Try to load encrypted save first
 	var err = cfg.load_encrypted_pass(path, SAVE_ENCRYPTION_KEY)
@@ -205,6 +209,10 @@ func get_upgrade_script(upgrade_type: UpgradeType) -> Script:
 			return preload("res://scripts/upgrades/explosive_reload.gd")
 		UpgradeType.FIRE_TRAIL:
 			return preload("res://scripts/upgrades/fire_trail.gd")
+		UpgradeType.VAMPIRE_BULLETS:
+			return preload("res://scripts/upgrades/vampire_bullets.gd")
+		UpgradeType.DASH_ATTACK:
+			return preload("res://scripts/upgrades/dash_attack.gd")
 		_:
 			return null
 

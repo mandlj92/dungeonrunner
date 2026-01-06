@@ -1,2 +1,6 @@
 res://scenes/main.tscn
 res://scenes/world/run.tscn
+res://scenes/player/Player.tscn
+res://scenes/projectile.tscn
+res://scenes/world/exit_portal.tscn
+res://scenes/world/Room.tscn

@@ -11,7 +11,7 @@ func _on_applied() -> void:
 	description = "Reloading knocks back nearby enemies"
 	trigger_type = TriggerType.ON_RELOAD
 
-func _on_triggered(context: Dictionary) -> void:
+func _on_triggered(_context: Dictionary) -> void:
 	if not owner_entity:
 		return
 

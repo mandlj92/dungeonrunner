@@ -180,3 +180,10 @@ func _on_spawn_projectile(scene: PackedScene, spawn_transform: Transform3D, dama
 	projectile.direction = -spawn_transform.basis.z
 	projectile.damage = damage
 	projectile.shooter = shooter
+
+	# Trigger ON_SHOOT upgrades if shooter has UpgradeManager
+	if shooter and shooter.has_node("UpgradeManager"):
+		var upgrade_manager = shooter.get_node("UpgradeManager")
+		if upgrade_manager.has_method("trigger_upgrades"):
+			var context = {"projectile": projectile}
+			upgrade_manager.trigger_upgrades(UpgradeEffect.TriggerType.ON_SHOOT, context)
