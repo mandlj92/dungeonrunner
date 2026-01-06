@@ -54,7 +54,7 @@ func _ready() -> void:
 				var enemy_chance = min(0.8 + (GameState.dungeon_level - 1) * 0.05, 1.0)
 				if randf() < enemy_chance:
 					var e = enemy_scene.instantiate()
-					add_child(e)
+					room.add_child(e)
 
 					# Pick random valid floor position
 					var spawn_pos: Vector3 = valid_floors[randi() % valid_floors.size()]

@@ -1,4 +1,6 @@
-[gd_scene load_steps=3 format=3 uid="uid://cal5s08tp75gd"]
+[gd_scene load_steps=5 format=3 uid="uid://cal5s08tp75gd"]
+
+[ext_resource type="Script" path="res://scripts/world/room.gd" id="1_h5j7f"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_lyhqv"]
 size = Vector3(24, 1, 24)
@@ -6,7 +8,10 @@ size = Vector3(24, 1, 24)
 [sub_resource type="BoxShape3D" id="BoxShape3D_ax7oq"]
 size = Vector3(24, 1, 24)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_7mg4e"]
+
 [node name="Room" type="Node3D"]
+script = ExtResource("1_h5j7f")
 
 [node name="Floor" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
@@ -27,3 +32,10 @@ shape = SubResource("BoxShape3D_ax7oq")
 
 [node name="GridMap" type="GridMap" parent="."]
 cell_size = Vector3(1, 1, 1)
+
+[node name="ActivationZone" type="Area3D" parent="."]
+collision_layer = 8
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ActivationZone"]
+transform = Transform3D(24, 0, 0, 0, 3, 0, 0, 0, 24, 0, 0, 0)
+shape = SubResource("BoxShape3D_7mg4e")

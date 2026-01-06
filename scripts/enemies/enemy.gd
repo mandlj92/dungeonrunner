@@ -11,6 +11,13 @@ extends CharacterBody3D
 @export var flash_time := 0.1
 @export var aggro_range := 15.0  # Distance at which enemy starts chasing player
 
+enum State {
+	SLEEPING,
+	CHASING,
+	SURROUNDING,
+	ATTACKING
+}
+
 var health := 30
 var _attack_timer := 0.0
 var _hit_stun_timer := 0.0
@@ -21,7 +28,14 @@ var player: Node3D
 
 @export var debug_ai := false
 @export var debug_tint := false
+@export var separation_distance := 2.0
+@export var separation_force := 5.0
+
 var _using_fallback := false
+var _state: State = State.SLEEPING
+var _raycast: RayCast3D = null
+var _token_request_timer := 0.0
+const TOKEN_REQUEST_INTERVAL := 0.1
 func _ready() -> void:
 	health = max_health
 	player = get_tree().get_first_node_in_group("player")
@@ -55,66 +69,188 @@ func _ready() -> void:
 	agent.target_desired_distance = 0.5
 	agent.max_speed = speed
 
+	# Add to "enemies" group for separation logic
+	add_to_group("enemies")
+
+	# Create raycast for LOS checks (CRITICAL: mask out other enemies!)
+	_raycast = RayCast3D.new()
+	add_child(_raycast)
+	_raycast.enabled = true
+	_raycast.exclude_parent = true
+	_raycast.collision_mask = 0b0101  # Layers 1+3 only (Player+World, NO enemies)
+
+	# Start dormant
+	_state = State.SLEEPING
+	set_physics_process(false)
+
+func wake_up() -> void:
+	if _state != State.SLEEPING:
+		return
+
+	_state = State.CHASING
+	set_physics_process(true)
+
+func go_dormant() -> void:
+	if _state == State.SLEEPING:
+		return
+
+	# Return token if holding one
+	if _state == State.ATTACKING:
+		AttackManager.return_attack(self)
+
+	_state = State.SLEEPING
+	set_physics_process(false)
+
 func _physics_process(delta: float) -> void:
-	# Ensure we have a reference to the player (in case this enemy was
-	# instantiated before the player was added to the scene tree).
+	# Ensure player reference
 	if not player:
 		player = get_tree().get_first_node_in_group("player")
 		if not player:
 			return
+
+	# Update timers
 	_attack_timer = max(0.0, _attack_timer - delta)
 	_hit_stun_timer = max(0.0, _hit_stun_timer - delta)
 
-	# Check distance to player
-	var dist = global_transform.origin.distance_to(player.global_transform.origin)
+	# State machine
+	match _state:
+		State.SLEEPING:
+			# Should not reach here (physics disabled)
+			return
 
-	# Only chase if player is within aggro range
-	if dist <= aggro_range:
-		agent.target_position = player.global_transform.origin
-		var next_pos = agent.get_next_path_position()
-		# If the agent has no valid path (returns zero or is effectively at the
-		# same position), fall back to directly moving toward the player so
-		# enemies still chase even if the navmesh/agent couldn't compute a path.
-		var used_fallback := false
-		if next_pos == Vector3.ZERO or next_pos.distance_to(global_transform.origin) <= 0.05:
-			# NavigationAgent3D returned an unusable next position — fall back
-			next_pos = player.global_transform.origin
-			used_fallback = true
-		# Update debug state and optionally log changes
-		if debug_ai and used_fallback != _using_fallback:
-			_using_fallback = used_fallback
-			if _using_fallback:
-				print("[Enemy] ", name, " using NAV FALLBACK at ", global_transform.origin)
-			else:
-				print("[Enemy] ", name, " using NAV PATH at ", global_transform.origin)
-		# Optionally tint the mesh to visualize fallback usage
-		if debug_tint and mesh and mesh.get_surface_override_material_count() >= 0:
-			if used_fallback:
-				mesh.set_surface_override_material(0, StandardMaterial3D.new().duplicate())
-				mesh.get_surface_override_material(0).albedo_color = Color(1, 0.6, 0.6)
-			else:
-				mesh.set_surface_override_material(0, null)
-		var dir = (next_pos - global_transform.origin)
-		dir.y = 0
-		if dir.length() > 0.05:
-			dir = dir.normalized()
-		var speed_scale := 0.15 if _hit_stun_timer > 0.0 else 1.0
-		velocity.x = dir.x * speed * speed_scale
-		velocity.z = dir.z * speed * speed_scale
-	else:
-		# Stand still when player is out of range
-		velocity.x = 0
-		velocity.z = 0
+		State.CHASING:
+			_process_chasing(delta)
 
+		State.SURROUNDING:
+			_process_surrounding(delta)
+
+		State.ATTACKING:
+			_process_attacking(delta)
+
+	# Apply gravity and movement
 	velocity.y += -18.0 * delta
 	move_and_slide()
 
-	# attack only if in range
-	if dist <= attack_range and _attack_timer <= 0.0:
-		_attack_timer = attack_cooldown
+func _process_chasing(delta: float) -> void:
+	var dist = global_transform.origin.distance_to(player.global_transform.origin)
+
+	# Check aggro range
+	if dist > aggro_range:
+		velocity.x = 0
+		velocity.z = 0
+		return
+
+	# Raycast LOS check
+	_raycast.target_position = player.global_transform.origin - global_transform.origin
+	_raycast.force_raycast_update()
+
+	var has_los := false
+	if _raycast.is_colliding():
+		var hit = _raycast.get_collider()
+		if hit and hit.is_in_group("player"):
+			has_los = true
+	else:
+		has_los = true
+
+	# Choose movement strategy
+	var target_pos: Vector3
+	if has_los:
+		# Direct movement
+		target_pos = player.global_transform.origin
+	else:
+		# Use navigation
+		agent.target_position = player.global_transform.origin
+		target_pos = agent.get_next_path_position()
+
+		# Fallback if navigation fails
+		if target_pos == Vector3.ZERO or target_pos.distance_to(global_transform.origin) <= 0.05:
+			target_pos = player.global_transform.origin
+
+	# Calculate movement
+	var dir = (target_pos - global_transform.origin)
+	dir.y = 0
+	if dir.length() > 0.05:
+		dir = dir.normalized()
+
+	var speed_scale := 0.15 if _hit_stun_timer > 0.0 else 1.0
+	velocity.x = dir.x * speed * speed_scale
+	velocity.z = dir.z * speed * speed_scale
+
+	# Transition to SURROUNDING if in range
+	if dist <= attack_range:
+		_state = State.SURROUNDING
+		_token_request_timer = 0.0
+
+func _process_surrounding(delta: float) -> void:
+	var dist = global_transform.origin.distance_to(player.global_transform.origin)
+
+	# Check if player moved away
+	if dist > attack_range * 1.5:
+		_state = State.CHASING
+		return
+
+	# Request token periodically
+	_token_request_timer -= delta
+	if _token_request_timer <= 0.0:
+		_token_request_timer = TOKEN_REQUEST_INTERVAL
+		if AttackManager.request_attack(self):
+			_state = State.ATTACKING
+			_attack_timer = attack_cooldown
+			return
+
+	# Calculate separation from nearby enemies
+	var separation := Vector3.ZERO
+	var nearby_enemies = get_tree().get_nodes_in_group("enemies")
+	for enemy in nearby_enemies:
+		if enemy == self or not is_instance_valid(enemy):
+			continue
+
+		var to_enemy = enemy.global_transform.origin - global_transform.origin
+		to_enemy.y = 0
+		var dist_to_enemy = to_enemy.length()
+
+		if dist_to_enemy < separation_distance and dist_to_enemy > 0.01:
+			var repulsion = -to_enemy.normalized() / dist_to_enemy
+			separation += repulsion * separation_force
+
+	# Continue pathfinding toward player
+	agent.target_position = player.global_transform.origin
+	var nav_target = agent.get_next_path_position()
+	if nav_target == Vector3.ZERO or nav_target.distance_to(global_transform.origin) <= 0.05:
+		nav_target = player.global_transform.origin
+
+	var nav_dir = (nav_target - global_transform.origin)
+	nav_dir.y = 0
+	if nav_dir.length() > 0.05:
+		nav_dir = nav_dir.normalized()
+
+	# Blend navigation + separation
+	var final_dir = (nav_dir + separation).normalized()
+
+	velocity.x = final_dir.x * speed * 0.5  # Slower while surrounding
+	velocity.z = final_dir.z * speed * 0.5
+
+func _process_attacking(delta: float) -> void:
+	# Execute attack when timer ready
+	if _attack_timer <= 0.0:
 		if player.has_method("take_damage"):
 			var hit_dir = (player.global_transform.origin - global_transform.origin).normalized()
 			player.take_damage(damage, hit_dir)
+
+		_attack_timer = attack_cooldown
+
+	# Wait for cooldown
+	if _attack_timer <= delta:  # About to finish
+		# Return token
+		AttackManager.return_attack(self)
+
+		# Check distance for next state
+		var dist = global_transform.origin.distance_to(player.global_transform.origin)
+		if dist <= attack_range:
+			_state = State.SURROUNDING
+			_token_request_timer = 0.0
+		else:
+			_state = State.CHASING
 
 func take_damage(amount:int, hit_dir: Vector3 = Vector3.ZERO) -> int:
 	var applied: int = min(amount, health)
@@ -253,6 +389,10 @@ func _spawn_floating_text(damage_amount: int) -> void:
 	tween.tween_callback(label.queue_free)
 
 func _die() -> void:
+	# Return token if holding one
+	if _state == State.ATTACKING:
+		AttackManager.return_attack(self)
+
 	# Disable collision
 	if $CollisionShape3D:
 		$CollisionShape3D.disabled = true
