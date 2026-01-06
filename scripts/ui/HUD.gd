@@ -6,6 +6,9 @@ extends Control
 @onready var timer_label = $TimerLabel
 @onready var damage_flash := _ensure_damage_flash()
 
+var _cur_hp: int = 100
+var _max_hp: int = 100
+
 func _ready() -> void:
 	add_to_group("hud")
 
@@ -24,7 +27,35 @@ func _ready() -> void:
 		lbl.offset_top = 0.1
 		add_child(lbl)
 
-func set_health(v:int, maxv:int) -> void:
+func _process(delta: float) -> void:
+	_update_crisis_pulse(delta)
+
+func _update_crisis_pulse(_delta: float) -> void:
+	if not damage_flash:
+		return
+
+	# Ensure _max_hp is not 0 to avoid division by zero
+	if _max_hp <= 0:
+		return
+
+	# Calculate health ratio
+	var ratio := float(_cur_hp) / float(_max_hp)
+
+	# Crisis mode activates at 30% health or below
+	if _cur_hp > 0 and ratio <= 0.3:
+		# Force visibility ON
+		damage_flash.visible = true
+		# Pulse alpha between 0.05 and 0.2
+		damage_flash.modulate.a = 0.05 + (0.15 * abs(sin(Time.get_ticks_msec() * 0.005)))
+	else:
+		# Only hide if we aren't currently running a damage flash tween
+		if not damage_flash.modulate.a > 0.5:
+			damage_flash.visible = false
+			damage_flash.modulate.a = 0.0
+
+func set_health(v: int, maxv: int) -> void:
+	_cur_hp = v
+	_max_hp = maxv
 	health_label.text = "HP: %d/%d" % [v, maxv]
 
 func set_ammo(v:int, maxv:int) -> void:

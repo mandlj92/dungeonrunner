@@ -18,6 +18,9 @@ var ammo := 30
 @export var fall_death_time := 5.0
 var _fall_timer := 0.0
 
+const FOV_BASE := 75.0
+const FOV_SPRINT := 85.0
+
 @export var gun_damage := 10
 @export var melee_damage := 20
 @export var fire_cooldown := 0.15
@@ -94,6 +97,13 @@ func _physics_process(delta: float) -> void:
 	_invuln_timer = max(0.0, _invuln_timer - delta)
 	_update_rage_mode(delta)
 	_update_screen_shake(delta)
+
+	# Dynamic FOV based on speed
+	var horizontal_velocity := Vector2(velocity.x, velocity.z).length()
+	if horizontal_velocity > base_speed * 1.1:
+		cam.fov = lerp(cam.fov, FOV_SPRINT, delta * 8.0)
+	else:
+		cam.fov = lerp(cam.fov, FOV_BASE, delta * 8.0)
 
 	var dir := Vector3.ZERO
 	if Input.is_action_pressed("move_forward"): dir -= transform.basis.z

@@ -126,6 +126,7 @@ func take_damage(amount:int, hit_dir: Vector3 = Vector3.ZERO) -> int:
 	_play_hit_sound()
 	_spawn_floating_text(applied)
 	if health <= 0:
+		_spawn_gibs(global_position)
 		_die()
 	return applied
 
@@ -193,9 +194,46 @@ func _play_hit_sound() -> void:
 	await get_tree().create_timer(0.12).timeout
 	player_audio.queue_free()
 
+func _spawn_gibs(pos: Vector3) -> void:
+	for i in range(randi_range(4, 5)):
+		# Create RigidBody3D
+		var gib = RigidBody3D.new()
+		# Add to scene root to prevent premature deletion if enemy dies
+		get_tree().current_scene.add_child(gib)
+
+		# Position with random offset to prevent stacking (Y offset ensures upward spawn)
+		gib.global_position = global_position + Vector3(randf_range(-0.5, 0.5), randf_range(0.5, 1.0), randf_range(-0.5, 0.5))
+
+		# Add mesh
+		var mesh_inst = MeshInstance3D.new()
+		var box_mesh = BoxMesh.new()
+		box_mesh.size = Vector3(0.2, 0.2, 0.2)
+		mesh_inst.mesh = box_mesh
+
+		# Create red material
+		var mat = StandardMaterial3D.new()
+		mat.albedo_color = Color(0.8, 0.1, 0.1)
+		mesh_inst.set_surface_override_material(0, mat)
+		gib.add_child(mesh_inst)
+
+		# Add collision shape
+		var col_shape = CollisionShape3D.new()
+		var box_shape = BoxShape3D.new()
+		box_shape.size = Vector3(0.2, 0.2, 0.2)
+		col_shape.shape = box_shape
+		gib.add_child(col_shape)
+
+		# Apply strong random impulse to scatter gibs away from center
+		var impulse_dir := Vector3(randf_range(-1, 1), randf_range(0.5, 1), randf_range(-1, 1)).normalized()
+		gib.apply_impulse(impulse_dir * randf_range(8.0, 12.0))
+
+		# Cleanup using scene tree timer (since gib is now part of scene root)
+		get_tree().create_timer(3.0).timeout.connect(gib.queue_free)
+
 func _spawn_floating_text(damage_amount: int) -> void:
 	var label = Label3D.new()
-	get_parent().add_child(label)
+	# Add to scene root to prevent premature deletion if enemy dies
+	get_tree().current_scene.add_child(label)
 	label.global_position = global_position + Vector3(0, 1.5, 0)
 	label.text = str(damage_amount)
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -208,26 +246,11 @@ func _spawn_floating_text(damage_amount: int) -> void:
 	else:
 		label.modulate = Color.WHITE
 
-	# Animate upward and fade out
-	var start_pos = label.global_position
-	var fade_duration = 0.8
-	var rise_speed = 2.0
-	var elapsed = 0.0
-
-	while elapsed < fade_duration:
-		var delta = get_process_delta_time()
-		elapsed += delta
-
-		# Move upward
-		label.global_position = start_pos + Vector3(0, rise_speed * elapsed, 0)
-
-		# Fade out
-		var alpha = 1.0 - (elapsed / fade_duration)
-		label.modulate.a = alpha
-
-		await get_tree().process_frame
-
-	label.queue_free()
+	# Use tween for reliable animation and guaranteed cleanup
+	var tween = create_tween()
+	tween.tween_property(label, "position", label.position + Vector3(0, 1.5, 0), 0.5)
+	tween.parallel().tween_property(label, "modulate:a", 0.0, 0.5)
+	tween.tween_callback(label.queue_free)
 
 func _die() -> void:
 	# Disable collision
