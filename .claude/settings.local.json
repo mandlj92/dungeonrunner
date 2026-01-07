@@ -4,7 +4,12 @@
       "Bash(/Applications/Godot.app/Contents/MacOS/Godot:*)",
       "Bash(cat:*)",
       "Bash(wc:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(tree:*)",
+      "Bash(ls:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nPhase 1: Create foundation components and resources\n\n- Created EnemyStats and WeaponStats resource classes for data-driven balance\n- Created VFXComponent \\(~180 lines\\) for particle/gib/audio effects\n- Created CameraVFX \\(~100 lines\\) for screen shake effects\n- Created basic_enemy_stats.tres with default enemy values\n- Separated visual effects from game logic per RULES.md Section 5.1\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   }
 }
