@@ -58,12 +58,12 @@ func _ready() -> void:
 			print("[Enemy]", name, "NavAgent radius:", agent.radius, "height:", agent.height)
 
 	if agent and $CollisionShape3D and $CollisionShape3D.shape:
-		var shape := $CollisionShape3D.shape
+		var shape: Shape3D = $CollisionShape3D.shape
 		if shape is CapsuleShape3D:
 			agent.radius = shape.radius
 			agent.height = shape.height
 		elif shape is BoxShape3D:
-			var ext := shape.size
+			var ext: Vector3 = shape.size
 			agent.radius = max(ext.x, ext.z)
 			agent.height = ext.y * 2.0
 		agent.max_speed = speed
