@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://dji0q3jquip4f"]
+[gd_scene load_steps=10 format=3 uid="uid://dji0q3jquip4f"]
 
 [ext_resource type="Script" path="res://scripts/player/player.gd" id="1_player"]
 [ext_resource type="Script" path="res://scripts/components/health_component.gd" id="2_ed480"]
@@ -7,12 +7,14 @@
 [ext_resource type="Script" path="res://scripts/components/melee_controller.gd" id="5_t8400"]
 [ext_resource type="Script" path="res://scripts/upgrades/upgrade_manager.gd" id="6_31gii"]
 [ext_resource type="Script" path="res://scripts/components/camera_vfx.gd" id="7_camera_vfx"]
+[ext_resource type="PackedScene" uid="uid://dcrfj0sxycwdj" path="res://scenes/ui/pause_menu.tscn" id="8_pause_menu"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_xk1af"]
 
 [node name="Player" type="CharacterBody3D"]
 collision_mask = 3
 script = ExtResource("1_player")
+pause_menu_scene = ExtResource("8_pause_menu")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
