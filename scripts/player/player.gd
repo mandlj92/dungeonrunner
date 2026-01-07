@@ -20,14 +20,13 @@ const FOV_SPRINT := 85.0
 @export var hurt_flash_time := 0.25
 
 @export var damage_sfx: AudioStream
+@export var pause_menu_scene: PackedScene
 
 var _run_time := 0.0
-var _shake_remaining := 0.0
-var _shake_intensity := 0.0
-var _original_cam_position: Vector3
 var _rage_mode_active := false
 var _rage_timer := 0.0
 var _mouse_input: Vector2 = Vector2.ZERO
+var _was_sprinting := false
 
 @onready var head := $Head
 @onready var cam := $Head/Camera3D
@@ -35,17 +34,23 @@ var _mouse_input: Vector2 = Vector2.ZERO
 @onready var health_component := $HealthComponent as HealthComponent
 @onready var weapon_controller := $WeaponController as WeaponController
 @onready var melee_controller := $MeleeController as MeleeController
+@onready var camera_vfx := $CameraVFX as CameraVFX
 
 var pause_menu: Control
 
 signal died
 signal exited
 signal run_time_updated(time: float)
+signal sprinting_started
+signal sprinting_stopped
 
 func _ready() -> void:
 	add_to_group("player")
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-	_original_cam_position = cam.position
+
+	# Setup camera VFX
+	if camera_vfx:
+		camera_vfx.camera = cam
 
 	# Setup components
 	if weapon_controller:
@@ -69,9 +74,9 @@ func _ready() -> void:
 		Events.player_health_changed.emit(health_component.health, health_component.max_health)
 
 	# Create pause menu
-	var pause_scene = load("res://scenes/ui/pause_menu.tscn")
-	pause_menu = pause_scene.instantiate()
-	add_child(pause_menu)
+	if pause_menu_scene:
+		pause_menu = pause_menu_scene.instantiate()
+		add_child(pause_menu)
 
 func _apply_meta_upgrades() -> void:
 	if health_component:
@@ -109,7 +114,6 @@ func _physics_process(delta: float) -> void:
 	run_time_updated.emit(_run_time)
 
 	_update_rage_mode(delta)
-	_update_screen_shake(delta)
 
 	# Apply accumulated mouse input to rotation
 	if _mouse_input != Vector2.ZERO:
@@ -133,8 +137,16 @@ func _physics_process(delta: float) -> void:
 	dir = dir.normalized()
 
 	var speed := base_speed
-	if Input.is_action_pressed("sprint"):
+	var is_sprinting := Input.is_action_pressed("sprint")
+	if is_sprinting:
 		speed *= sprint_mult
+
+	# Emit sprint signals for upgrades
+	if is_sprinting and not _was_sprinting:
+		sprinting_started.emit()
+	elif not is_sprinting and _was_sprinting:
+		sprinting_stopped.emit()
+	_was_sprinting = is_sprinting
 
 	velocity.x = dir.x * speed
 	velocity.z = dir.z * speed
@@ -203,11 +215,11 @@ func _on_damaged(_amount: int, hit_dir: Vector3) -> void:
 		var dir := hit_dir.normalized()
 		velocity += dir * hurt_knockback
 
-	_screen_shake(0.3, 0.45)
-	_play_damage_sound()
-	Events.player_damaged.emit()
+	if camera_vfx:
+		camera_vfx.screen_shake(0.3, 0.45)
+		camera_vfx.play_sound(damage_sfx, 0.95, 1.05)
 
-	# Signal HUD to flash damage (HUD should connect to Events)
+	Events.player_damaged.emit()
 	Events.player_damage_flash_requested.emit(0.8, hurt_flash_time)
 
 func _on_died() -> void:
@@ -228,38 +240,9 @@ func heal(amount: int) -> void:
 	if health_component:
 		health_component.heal(amount)
 
-func _screen_shake(duration: float, intensity: float) -> void:
-	_shake_remaining = duration
-	_shake_intensity = intensity
-
 func screen_shake(duration: float, intensity: float) -> void:
-	_screen_shake(duration, intensity)
-
-func _update_screen_shake(delta: float) -> void:
-	if _shake_remaining > 0:
-		_shake_remaining -= delta
-		var offset = Vector3(
-			randf_range(-1, 1),
-			randf_range(-1, 1),
-			0
-		) * _shake_intensity
-		cam.position = _original_cam_position + offset
-	else:
-		cam.position = _original_cam_position
-
-func _play_damage_sound() -> void:
-	play_sfx(damage_sfx, 0.95, 1.05)
-
-func play_sfx(stream: AudioStream, pitch_min: float = 0.9, pitch_max: float = 1.1) -> void:
-	if not stream:
-		return
-
-	var audio_player := AudioStreamPlayer3D.new()
-	add_child(audio_player)
-	audio_player.stream = stream
-	audio_player.pitch_scale = randf_range(pitch_min, pitch_max)
-	audio_player.play()
-	audio_player.finished.connect(audio_player.queue_free)
+	if camera_vfx:
+		camera_vfx.screen_shake(duration, intensity)
 
 func activate_rage_mode(duration: float) -> void:
 	_rage_mode_active = true

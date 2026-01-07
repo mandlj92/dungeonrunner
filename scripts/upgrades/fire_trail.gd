@@ -8,24 +8,31 @@ class_name FireTrail
 @export var fire_lifetime := 2.0
 
 var _spawn_timer := 0.0
+var _is_sprinting := false
 
 func _on_applied() -> void:
 	upgrade_name = "Fire Trail"
 	description = "Sprinting leaves a trail of fire"
-	trigger_type = TriggerType.PASSIVE  # Continuous effect
+	trigger_type = TriggerType.PASSIVE
+
+	# Connect to player sprint signals
+	if owner_entity:
+		if owner_entity.has_signal("sprinting_started"):
+			owner_entity.sprinting_started.connect(_on_sprint_started)
+		if owner_entity.has_signal("sprinting_stopped"):
+			owner_entity.sprinting_stopped.connect(_on_sprint_stopped)
+
+func _on_sprint_started() -> void:
+	_is_sprinting = true
+
+func _on_sprint_stopped() -> void:
+	_is_sprinting = false
 
 func _process(delta: float) -> void:
 	if not is_active or not owner_entity:
 		return
 
-	# Check if player is sprinting
-	var is_sprinting := false
-	if owner_entity.has_method("is_sprinting"):
-		is_sprinting = owner_entity.is_sprinting()
-	elif Input.is_action_pressed("sprint"):
-		is_sprinting = true
-
-	if is_sprinting:
+	if _is_sprinting:
 		_spawn_timer -= delta
 		if _spawn_timer <= 0.0:
 			_spawn_fire_patch()
