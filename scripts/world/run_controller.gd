@@ -125,9 +125,10 @@ func _get_difficulty_scale() -> Dictionary:
 	}
 
 func _scale_enemy(enemy: Node, difficulty_multipliers: Dictionary) -> void:
-	if "max_health" in enemy:
-		enemy.max_health = int(enemy.max_health * difficulty_multipliers.health)
-		enemy.health = enemy.max_health
+	if enemy.has_node("HealthComponent"):
+		var health_comp := enemy.get_node("HealthComponent")
+		health_comp.max_health = int(health_comp.max_health * difficulty_multipliers.health)
+		health_comp.health = health_comp.max_health
 	if "damage" in enemy:
 		enemy.damage = int(enemy.damage * difficulty_multipliers.damage)
 	if "speed" in enemy:
@@ -139,25 +140,24 @@ func _make_elite(enemy: Node) -> void:
 
 	# Scale model by 1.5x
 	if enemy.has_node("MeshInstance3D"):
-		var mesh = enemy.get_node("MeshInstance3D")
+		var mesh := enemy.get_node("MeshInstance3D")
 		mesh.scale = Vector3(1.5, 1.5, 1.5)
 
 	# Multiply max_health by 3
-	if "max_health" in enemy:
-		enemy.max_health = int(enemy.max_health * 3)
-		enemy.health = enemy.max_health
+	if enemy.has_node("HealthComponent"):
+		var health_comp := enemy.get_node("HealthComponent")
+		health_comp.max_health = int(health_comp.max_health * 3)
+		health_comp.health = health_comp.max_health
 
 	# Multiply damage by 2
 	if "damage" in enemy:
 		enemy.damage = int(enemy.damage * 2)
 
-	# Change color to Red
-	if enemy.has_node("MeshInstance3D"):
-		var mesh = enemy.get_node("MeshInstance3D")
-		if mesh.mesh:
-			var mat = StandardMaterial3D.new()
-			mat.albedo_color = Color.RED
-			mesh.set_surface_override_material(0, mat)
+	# Change elite appearance via VFX component
+	if enemy.has_node("VFXComponent"):
+		var vfx := enemy.get_node("VFXComponent")
+		if vfx.has_method("set_elite_appearance"):
+			vfx.set_elite_appearance()
 
 func _on_player_died() -> void:
 	GameState.reset_run()  # Reset to level 1 on death
