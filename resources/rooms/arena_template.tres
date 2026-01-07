@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="RoomTemplate" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/room_template.gd" id="1_a1b2c"]
+
+[resource]
+script = ExtResource("1_a1b2c")
+template_name = "Arena"
+room_type = 0
+difficulty = 1
+min_depth = 0
+wall_density = 0.35
+automata_iterations = 3
+door_buffer = 4
+has_pillars = false
+pillar_count = 6
+min_enemies = 4
+max_enemies = 8
+custom_spawn_points = []

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="RoomTemplate" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/room_template.gd" id="1_a1b2c"]
+
+[resource]
+script = ExtResource("1_a1b2c")
+template_name = "Narrow Corridor"
+room_type = 1
+difficulty = 2
+min_depth = 1
+wall_density = 0.65
+automata_iterations = 5
+door_buffer = 2
+has_pillars = false
+pillar_count = 6
+min_enemies = 3
+max_enemies = 5
+custom_spawn_points = []

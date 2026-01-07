@@ -4,3 +4,4 @@ res://scenes/player/Player.tscn
 res://scenes/projectile.tscn
 res://scenes/world/exit_portal.tscn
 res://scenes/world/Room.tscn
+res://resources/dungeon_mesh_library.tres

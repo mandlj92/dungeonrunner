@@ -122,12 +122,10 @@ func _physics_process(delta: float) -> void:
 		head.rotation.x = clamp(head.rotation.x, deg_to_rad(-80), deg_to_rad(80))
 		_mouse_input = Vector2.ZERO
 
-	# Dynamic FOV based on speed
-	var horizontal_velocity := Vector2(velocity.x, velocity.z).length()
-	if horizontal_velocity > base_speed * 1.1:
-		cam.fov = lerp(cam.fov, FOV_SPRINT, delta * 8.0)
-	else:
-		cam.fov = lerp(cam.fov, FOV_BASE, delta * 8.0)
+	# Dynamic FOV based on sprint state (Rule 5.1: Visual feedback)
+	var is_sprinting := Input.is_action_pressed("sprint")
+	var target_fov: float = FOV_SPRINT if is_sprinting else FOV_BASE
+	cam.fov = lerp(cam.fov, target_fov, delta * 10.0)
 
 	var dir := Vector3.ZERO
 	if Input.is_action_pressed("move_forward"): dir -= transform.basis.z
@@ -137,7 +135,6 @@ func _physics_process(delta: float) -> void:
 	dir = dir.normalized()
 
 	var speed := base_speed
-	var is_sprinting := Input.is_action_pressed("sprint")
 	if is_sprinting:
 		speed *= sprint_mult
 
@@ -188,6 +185,9 @@ func _on_weapon_fired(spawn_transform: Transform3D, damage_amount: int) -> void:
 	# Forward to Events autoload for projectile spawning
 	if weapon_controller and weapon_controller.projectile_scene:
 		Events.spawn_projectile.emit(weapon_controller.projectile_scene, spawn_transform, damage_amount, self)
+
+	# Emit weapon_fired for UI feedback (crosshair expansion, etc.)
+	Events.weapon_fired.emit()
 
 func _on_ammo_changed(_current: int, _maximum: int) -> void:
 	# Can be connected by HUD via Events or directly

@@ -4,25 +4,34 @@ class_name RoomBuilder
 const ROOM_SIZE := 24
 const WALL_TILE_ID := 0
 const FLOOR_TILE_ID := -1  # Empty cell in GridMap
+const PILLAR_TILE_ID := 1  # Pillar tile (must exist in GridMap MeshLibrary)
 
 # Door positions (center of each side)
 const DOOR_NORTH := Vector2i(ROOM_SIZE / 2, 0)
 const DOOR_SOUTH := Vector2i(ROOM_SIZE / 2, ROOM_SIZE - 1)
 const DOOR_EAST := Vector2i(ROOM_SIZE - 1, ROOM_SIZE / 2)
 const DOOR_WEST := Vector2i(0, ROOM_SIZE / 2)
-const DOOR_BUFFER := 3  # Keep 3 tiles clear around doors
 
 ## Generates internal room layout using cellular automata
 ## Returns array of valid floor positions (in local room coordinates)
-func generate_room_layout(gridmap: GridMap, room_offset: Vector3, rng: RandomNumberGenerator) -> Array[Vector3]:
-	var grid := _initialize_grid(rng)
+func generate_room_layout(gridmap: GridMap, room_offset: Vector3, rng: RandomNumberGenerator, template: RoomTemplate = null) -> Array[Vector3]:
+	# Use template parameters or defaults
+	var wall_density := 0.45 if not template else template.wall_density
+	var iterations := 4 if not template else template.automata_iterations
+	var door_buffer := 3 if not template else template.door_buffer
+
+	var grid := _initialize_grid(rng, wall_density)
 
 	# Run cellular automata simulation
-	for iteration in range(4):
+	for iteration in range(iterations):
 		grid = _cellular_automata_step(grid)
 
 	# Clear areas around doors to ensure accessibility
-	_clear_door_areas(grid)
+	_clear_door_areas(grid, door_buffer)
+
+	# Add pillars if template specifies
+	if template and template.has_pillars:
+		_add_pillars(grid, rng, template.pillar_count)
 
 	# Apply the grid to the GridMap and collect valid floor positions
 	var valid_positions: Array[Vector3] = []
@@ -50,13 +59,12 @@ func generate_room_layout(gridmap: GridMap, room_offset: Vector3, rng: RandomNum
 	return valid_positions
 
 ## Initialize grid with random noise
-func _initialize_grid(rng: RandomNumberGenerator) -> Array:
+func _initialize_grid(rng: RandomNumberGenerator, wall_density: float) -> Array:
 	var grid := []
 	for x in range(ROOM_SIZE):
 		var row := []
 		for z in range(ROOM_SIZE):
-			# 45% chance of wall
-			var cell = WALL_TILE_ID if rng.randf() < 0.45 else FLOOR_TILE_ID
+			var cell = WALL_TILE_ID if rng.randf() < wall_density else FLOOR_TILE_ID
 			row.append(cell)
 		grid.append(row)
 	return grid
@@ -100,14 +108,46 @@ func _count_wall_neighbors(grid: Array, x: int, z: int) -> int:
 	return count
 
 ## Clear areas around doors to ensure player can enter/exit
-func _clear_door_areas(grid: Array) -> void:
+func _clear_door_areas(grid: Array, door_buffer: int) -> void:
 	var doors := [DOOR_NORTH, DOOR_SOUTH, DOOR_EAST, DOOR_WEST]
 
 	for door in doors:
-		for dx in range(-DOOR_BUFFER, DOOR_BUFFER + 1):
-			for dz in range(-DOOR_BUFFER, DOOR_BUFFER + 1):
+		for dx in range(-door_buffer, door_buffer + 1):
+			for dz in range(-door_buffer, door_buffer + 1):
 				var x: int = door.x + dx
 				var z: int = door.y + dz
 
 				if x >= 0 and x < ROOM_SIZE and z >= 0 and z < ROOM_SIZE:
 					grid[x][z] = FLOOR_TILE_ID
+
+## Add strategic pillars for cover mechanics
+func _add_pillars(grid: Array, rng: RandomNumberGenerator, count: int) -> void:
+	var placed := 0
+	var attempts := 0
+	var max_attempts := count * 10
+
+	while placed < count and attempts < max_attempts:
+		attempts += 1
+
+		# Random position away from edges
+		var x := rng.randi_range(4, ROOM_SIZE - 5)
+		var z := rng.randi_range(4, ROOM_SIZE - 5)
+
+		# Only place on floor tiles
+		if grid[x][z] != FLOOR_TILE_ID:
+			continue
+
+		# Ensure spacing between pillars (at least 3 tiles)
+		var too_close := false
+		for check_x in range(x - 3, x + 4):
+			for check_z in range(z - 3, z + 4):
+				if check_x >= 0 and check_x < ROOM_SIZE and check_z >= 0 and check_z < ROOM_SIZE:
+					if grid[check_x][check_z] == WALL_TILE_ID:
+						too_close = true
+						break
+			if too_close:
+				break
+
+		if not too_close:
+			grid[x][z] = WALL_TILE_ID
+			placed += 1

@@ -1,6 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://cal5s08tp75gd"]
+[gd_scene load_steps=6 format=3 uid="uid://cal5s08tp75gd"]
 
 [ext_resource type="Script" path="res://scripts/world/room.gd" id="1_h5j7f"]
+[ext_resource type="MeshLibrary" uid="uid://rjjmfpk6cji2" path="res://resources/dungeon_mesh_library.tres" id="2_meshlib"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_lyhqv"]
 size = Vector3(24, 1, 24)
@@ -31,6 +32,7 @@ shape = SubResource("BoxShape3D_ax7oq")
 [node name="ExitSpawn" type="Marker3D" parent="."]
 
 [node name="GridMap" type="GridMap" parent="."]
+mesh_library = ExtResource("2_meshlib")
 cell_size = Vector3(1, 1, 1)
 
 [node name="ActivationZone" type="Area3D" parent="."]

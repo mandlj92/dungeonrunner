@@ -24,3 +24,7 @@ signal player_rage_mode_changed(active: bool, opacity: float)
 # Combat events
 @warning_ignore("unused_signal")
 signal enemy_shot(enemy: Node)
+
+# Weapon events
+@warning_ignore("unused_signal")
+signal weapon_fired

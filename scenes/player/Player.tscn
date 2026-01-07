@@ -7,7 +7,7 @@
 [ext_resource type="Script" path="res://scripts/components/melee_controller.gd" id="5_t8400"]
 [ext_resource type="Script" path="res://scripts/upgrades/upgrade_manager.gd" id="6_31gii"]
 [ext_resource type="Script" path="res://scripts/components/camera_vfx.gd" id="7_camera_vfx"]
-[ext_resource type="PackedScene" uid="uid://dcrfj0sxycwdj" path="res://scenes/ui/pause_menu.tscn" id="8_pause_menu"]
+[ext_resource type="PackedScene" uid="uid://dx8uay503w4vr" path="res://scenes/ui/pause_menu.tscn" id="8_pause_menu"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_xk1af"]
 

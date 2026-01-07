@@ -1,5 +1,11 @@
 extends Node3D
 
+## Room template defining this room's characteristics
+var template: RoomTemplate = null
+
+## Valid floor positions for spawning (set by ProcGen)
+var valid_floor_positions: Array[Vector3] = []
+
 var _activation_zone: Area3D = null
 var _is_active := false
 var _children_with_wakeup: Array[Node] = []

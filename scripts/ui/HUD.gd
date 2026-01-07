@@ -1,5 +1,6 @@
 extends Control
 
+@onready var health_bar: ProgressBar = %HealthBar
 @onready var health_label = $HealthLabel
 @onready var ammo_label = $AmmoLabel
 @onready var coins_label = $CoinsLabel
@@ -73,6 +74,13 @@ func set_health(v: int, maxv: int) -> void:
 	_cur_hp = v
 	_max_hp = maxv
 	health_label.text = "HP: %d/%d" % [v, maxv]
+
+	# Update health bar with smooth tween (Rule 5.1: Visual feedback)
+	if health_bar:
+		health_bar.max_value = float(maxv)
+		var target_value: float = float(v)
+		var tween = create_tween()
+		tween.tween_property(health_bar, "value", target_value, 0.2)
 
 func set_ammo(v:int, maxv:int) -> void:
 	ammo_label.text = "AMMO: %d/%d" % [v, maxv]

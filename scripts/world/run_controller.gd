@@ -10,6 +10,11 @@ extends Node3D
 @export var room_scene: PackedScene
 @export var portal_scene: PackedScene
 
+@export_group("Room Templates")
+@export var arena_template: RoomTemplate
+@export var narrow_template: RoomTemplate
+@export var pillars_template: RoomTemplate
+
 var player
 
 func _ready() -> void:
@@ -26,6 +31,17 @@ func _ready() -> void:
 	var gen = ProcGen.new()
 	gen.room_scene = room_scene
 	gen.room_count = 10
+
+	# Assign room templates for variety (if configured)
+	var templates: Array[RoomTemplate] = []
+	if arena_template:
+		templates.append(arena_template)
+	if narrow_template:
+		templates.append(narrow_template)
+	if pillars_template:
+		templates.append(pillars_template)
+	gen.room_templates = templates
+
 	var data = gen.generate(world, rng_seed)
 
 	# bake navigation after generation
@@ -50,8 +66,14 @@ func _ready() -> void:
 		var room = data["rooms"][i]
 		var valid_floors: Array = room_valid_floors.get(i, [])
 
-		# Spawn multiple enemies per room (3-6 enemies)
-		var enemy_count := randi_range(3, 6)
+		# Determine enemy count from room template (or use defaults)
+		var min_enemies := 3
+		var max_enemies := 6
+		if room.template != null:
+			min_enemies = room.template.min_enemies
+			max_enemies = room.template.max_enemies
+
+		var enemy_count := randi_range(min_enemies, max_enemies)
 
 		# Ensure we have enough valid positions
 		if valid_floors.size() > 0:

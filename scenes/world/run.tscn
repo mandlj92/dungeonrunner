@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://cpi2kspq0yflo"]
+[gd_scene load_steps=13 format=3 uid="uid://cpi2kspq0yflo"]
 
 [ext_resource type="Script" path="res://scripts/world/run_controller.gd" id="1_jgai7"]
 [ext_resource type="PackedScene" uid="uid://cncaqxlg835ci" path="res://scenes/ui/HUD.tscn" id="2_hud"]
@@ -7,6 +7,9 @@
 [ext_resource type="PackedScene" uid="uid://c8vqm5yh3n7pa" path="res://scenes/pickups/ammo_pickup.tscn" id="5_pickup"]
 [ext_resource type="PackedScene" uid="uid://cal5s08tp75gd" path="res://scenes/world/Room.tscn" id="6_room"]
 [ext_resource type="PackedScene" uid="uid://bx7k8nan0p1qr" path="res://scenes/world/exit_portal.tscn" id="7_portal"]
+[ext_resource type="Resource" path="res://resources/rooms/arena_template.tres" id="8_arena"]
+[ext_resource type="Resource" path="res://resources/rooms/narrow_template.tres" id="9_narrow"]
+[ext_resource type="Resource" path="res://resources/rooms/pillars_template.tres" id="10_pillars"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_nm1ua"]
 
@@ -24,6 +27,9 @@ enemy_scene = ExtResource("4_enemy")
 pickup_scene = ExtResource("5_pickup")
 room_scene = ExtResource("6_room")
 portal_scene = ExtResource("7_portal")
+arena_template = ExtResource("8_arena")
+narrow_template = ExtResource("9_narrow")
+pillars_template = ExtResource("10_pillars")
 
 [node name="World" type="Node3D" parent="."]
 

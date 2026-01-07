@@ -1,9 +1,11 @@
-[gd_scene load_steps=7 format=3 uid="uid://b67fupypxpgbl"]
+[gd_scene load_steps=9 format=3 uid="uid://b67fupypxpgbl"]
 
 [ext_resource type="Script" path="res://scripts/enemies/enemy.gd" id="1_enemy"]
 [ext_resource type="Script" path="res://scripts/components/health_component.gd" id="2_health"]
 [ext_resource type="Script" path="res://scripts/components/vfx_component.gd" id="3_vfx"]
 [ext_resource type="Script" path="res://scripts/enemies/enemy_state_helper.gd" id="4_helper"]
+[ext_resource type="Script" path="res://scripts/components/hit_flash_component.gd" id="5_flash"]
+[ext_resource type="Material" uid="uid://your_uid" path="res://resources/materials/flash_white.tres" id="6_flash_mat"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_qg238"]
 
@@ -36,3 +38,10 @@ script = ExtResource("3_vfx")
 
 [node name="EnemyStateHelper" type="Node" parent="."]
 script = ExtResource("4_helper")
+
+[node name="HitFlashComponent" type="Node" parent="."]
+script = ExtResource("5_flash")
+health_component = NodePath("../HealthComponent")
+mesh = NodePath("../MeshInstance3D")
+flash_material = ExtResource("6_flash_mat")
+flash_duration = 0.1

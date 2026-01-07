@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://cncaqxlg835ci"]
+[gd_scene load_steps=3 format=3 uid="uid://cncaqxlg835ci"]
 
 [ext_resource type="Script" path="res://scripts/ui/HUD.gd" id="1_hud"]
+[ext_resource type="Script" path="res://scripts/ui/reticle.gd" id="2_reticle"]
 
 [node name="Hud" type="Control"]
 layout_mode = 3
@@ -12,30 +13,41 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_hud")
 
-[node name="HealthLabel" type="Label" parent="."]
+[node name="HealthBar" type="ProgressBar" parent="."]
+unique_name_in_owner = true
 layout_mode = 1
 offset_left = 20.0
 offset_top = 20.0
+offset_right = 220.0
+offset_bottom = 40.0
+max_value = 100.0
+value = 100.0
+show_percentage = false
+
+[node name="HealthLabel" type="Label" parent="."]
+layout_mode = 1
+offset_left = 20.0
+offset_top = 45.0
 offset_right = 200.0
-offset_bottom = 50.0
+offset_bottom = 65.0
 grow_horizontal = 0
 text = "HP: 100/100"
 
 [node name="AmmoLabel" type="Label" parent="."]
 layout_mode = 1
 offset_left = 20.0
-offset_top = 55.0
+offset_top = 70.0
 offset_right = 200.0
-offset_bottom = 85.0
+offset_bottom = 90.0
 grow_horizontal = 0
 text = "AMMO: 30/30"
 
 [node name="CoinsLabel" type="Label" parent="."]
 layout_mode = 1
 offset_left = 20.0
-offset_top = 90.0
+offset_top = 95.0
 offset_right = 200.0
-offset_bottom = 120.0
+offset_bottom = 115.0
 grow_horizontal = 0
 text = "COINS: 0"
 
@@ -66,6 +78,7 @@ offset_bottom = 10.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+script = ExtResource("2_reticle")
 
 [node name="HorizontalLine" type="ColorRect" parent="Crosshair"]
 layout_mode = 1
