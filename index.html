@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <meta name="theme-color" content="#090b12" />
+  <title>Dungeon Run: Ashvault</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main id="app">
+    <canvas id="game" width="1280" height="720" aria-label="Dungeon Run: Ashvault game canvas"></canvas>
+    <section id="menu" class="panel visible">
+      <p class="eyebrow">DUNGEON RUN</p>
+      <h1>ASHVAULT</h1>
+      <p class="lede">Descend through a shifting vault. Survive ten chambers, build a broken loadout, and kill the Warden.</p>
+      <div class="menu-grid">
+        <button id="startBtn">Begin Run</button>
+        <button id="armoryBtn" class="secondary">Permanent Armory</button>
+        <button id="scoresBtn" class="secondary">Hall of Records</button>
+      </div>
+      <p class="controls">Move: WASD / left stick · Aim: mouse / right stick · Attack: click / RT · Dash: Space / LB · Pause: Esc / Start</p>
+      <p id="metaLine" class="meta"></p>
+    </section>
+    <section id="choice" class="panel modal"></section>
+    <section id="armory" class="panel modal"></section>
+    <section id="scores" class="panel modal"></section>
+    <section id="pause" class="panel modal">
+      <p class="eyebrow">RUN SUSPENDED</p><h2>Paused</h2>
+      <button id="resumeBtn">Resume</button><button id="quitBtn" class="danger">Abandon Run</button>
+    </section>
+    <section id="summary" class="panel modal"></section>
+    <div id="toast"></div>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
