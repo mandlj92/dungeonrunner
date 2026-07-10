@@ -1,61 +1,54 @@
-Dungeon Run
-=============
+# Dungeon Run: Ashvault
 
-Short summary of the Godot project in this repository.
+A complete, zero-build browser roguelite plus the original Godot prototype.
 
-**Project**
-- **Engine:** Godot 4.3 (project.godot config indicates 4.3 features)
-- **Main scene:** `res://scenes/main.tscn`
-- **Autoloads:** `GameState` -> `res://scripts/game_state.gd`
+## Play the browser edition
 
-What this is
-------------
-- A small top-down/3D-ish roguelike-ish run-based prototype.
-- Core flow: Main Menu -> Shop -> Start Run (loads `scenes/world/run.tscn`) -> complete run -> Summary
+Open `index.html` locally, or enable **Settings → Pages → GitHub Actions** for this repository. Every push to `main` then deploys the game through `.github/workflows/pages.yml`.
 
-Key scenes
------------
-- `scenes/main.tscn` — Main menu
-- `scenes/ui/shop.tscn` — Upgrade shop and run starter
-- `scenes/world/run.tscn` — Run controller and generated rooms
-- `scenes/world/Room.tscn` — Room template used by procgen
-- `scenes/player/Player.tscn` — Player character
-- `scenes/enemies/enemy.tscn` — Enemy template
-- `scenes/projectile.tscn` — Projectile used by player
-- `scenes/pickups/ammo_pickup.tscn` — Pickup template
-- `scenes/ui/HUD.tscn`, `scenes/ui/pause_menu.tscn`, `scenes/summary.tscn`
+Expected GitHub Pages URL after Pages is enabled:
 
-Key scripts (high-level)
-------------------------
-- `scripts/game_state.gd` — Global autoload for coins, upgrades and run seed
-- `scripts/world/procgen.gd` — Procedural room placement helper
-- `scripts/world/run_controller.gd` — Orchestrates run generation and spawns
-- `scripts/player/player.gd` — Player movement, input, firing and HUD interaction
-- `scripts/enemies/enemy.gd` — Basic navigation and attack AI
-- `scripts/projectile.gd` — Projectile movement and hit handling
-- `scripts/pickups/pickup.gd` — Pickup behavior
-- `scripts/ui/*.gd` — Menu, shop, HUD and summary UI glue
+`https://mandlj92.github.io/dungeonrunner/`
 
-Known issues / things to verify
-------------------------------
-- `run_controller` exports a `portal_scene` PackedScene which is not assigned in `run.tscn` in the current repo — confirm in-editor assignment.
-- The `assets/` folder appears present but scenes/scripts do not currently reference external textures/VFX — verify asset imports and references.
-- Pause menu is instantiated at runtime by the player script (expected but note behaviour).
+## Browser game features
 
-How to run
-----------
-1. Open this folder in Godot 4.3 and press Play (Main scene is `res://scenes/main.tscn`).
-2. Alternatively, use a Godot 4.3 CLI to run or export the project.
+- Ten-chamber, five-to-ten-minute run structure
+- Randomized obstacle layouts and enemy waves
+- Stalker, brute, and ranged enemy archetypes
+- Multi-phase Warden boss encounter
+- Eleven run upgrades across common, rare, and legendary tiers
+- Permanent meta-progression purchased with recovered Embers
+- Persistent local high scores and run statistics
+- Keyboard and mouse support
+- Standard gamepad support through the browser Gamepad API
+- Responsive 16:9 canvas presentation
+- No dependencies, package manager, account, server, or build step
 
-Asset scanner
--------------
-- A small utility `tools/scan_assets.py` is included to list referenced resources and report unreferenced files in `assets/`.
+## Controls
 
-Next steps I can do for you
---------------------------
-- Run the asset scanner and report results.
-- Create a `docs/SUMMARY.md` with the full detailed mapping of every scene/script.
-- Patch `run_controller` or assign missing PackedScenes if you want me to make editor-safe changes.
+| Action | Keyboard / Mouse | Controller |
+| --- | --- | --- |
+| Move | WASD | Left stick |
+| Aim | Mouse | Right stick |
+| Attack | Left mouse | Right trigger |
+| Dash | Space | Left bumper |
+| Pause | Escape | Start button support varies by browser |
 
----
-Generated: January 2026
+## itch.io packaging
+
+1. Put `index.html`, `styles.css`, and `game.js` in a ZIP archive.
+2. Create a new itch.io project and set **Kind of project** to **HTML**.
+3. Upload the ZIP and select **This file will be played in the browser**.
+4. Use a 16:9 viewport such as 1280 × 720 and allow fullscreen.
+
+Progress is stored in the browser using `localStorage`. Each browser/profile therefore has its own armory and scoreboard.
+
+## Original Godot project
+
+The repository also retains the earlier Godot 4.3 prototype:
+
+- Main scene: `res://scenes/main.tscn`
+- Run scene: `res://scenes/world/run.tscn`
+- Global state: `res://scripts/game_state.gd`
+
+Open the repository in Godot 4.3 and press Play to run that edition.
