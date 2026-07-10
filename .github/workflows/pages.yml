@@ -27,7 +27,7 @@ jobs:
       - name: Prepare static site
         run: |
           mkdir -p _site
-          cp index.html styles.css game.js _site/
+          cp index.html styles.css game-core.js game-combat.js game-render.js _site/
           touch _site/.nojekyll
 
       - name: Upload Pages artifact
