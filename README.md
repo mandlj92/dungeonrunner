@@ -4,35 +4,44 @@ A complete, zero-build browser roguelite plus the original Godot prototype.
 
 ## Play the browser edition
 
-Open `index.html` locally, or enable **Settings → Pages → GitHub Actions** for this repository. Every push to `main` then deploys the game through `.github/workflows/pages.yml`.
-
-Expected GitHub Pages URL after Pages is enabled:
+Live build:
 
 `https://mandlj92.github.io/dungeonrunner/`
+
+Every push to `main` deploys through `.github/workflows/pages.yml`.
 
 ## Browser game features
 
 - Ten-chamber, five-to-ten-minute run structure
 - Randomized obstacle layouts and enemy waves
-- Stalker, brute, and ranged enemy archetypes
+- Seven enemy types: stalker, brute, shooter, Vault Charger, Gravebinder, summoned shades, and the Warden
 - Multi-phase Warden boss encounter
-- Eleven run upgrades across common, rare, and legendary tiers
+- Telegraphed charge attacks and enemy summoning
+- Combo scoring with escalating score multipliers
+- Charged Ash Nova screen-clearing ability
+- Random chamber modifiers: Blood Moon, Gilded Curse, and The Veil
+- Shielded elite enemies with increased rewards
+- Destructible explosive urns and environmental chain damage
+- Twelve run upgrades across common, rare, and legendary tiers
 - Permanent meta-progression purchased with recovered Embers
 - Persistent local high scores and run statistics
-- Keyboard and mouse support
-- Standard gamepad support through the browser Gamepad API
+- Keyboard, mouse, gamepad, and touchscreen support
+- Procedural audio effects generated in the browser
+- Dynamic lighting, shadows, animated runes, projectile trails, damage numbers, particles, and screen effects
 - Responsive 16:9 canvas presentation
 - No dependencies, package manager, account, server, or build step
 
 ## Controls
 
-| Action | Keyboard / Mouse | Controller |
-| --- | --- | --- |
-| Move | WASD | Left stick |
-| Aim | Mouse | Right stick |
-| Attack | Left mouse | Right trigger |
-| Dash | Space | Left bumper |
-| Pause | Escape | Start button support varies by browser |
+| Action | Keyboard / Mouse | Controller | Touchscreen |
+| --- | --- | --- | --- |
+| Move | WASD | Left stick | Left virtual stick |
+| Aim and attack | Mouse and left click | Right stick and right trigger | Drag on right side |
+| Dash | Space | Left bumper | Dash button |
+| Ash Nova | Q | Y / Triangle | Nova button |
+| Pause | Escape | Start | Browser controls |
+
+Ash Nova charges through enemy kills. Elite enemies charge it faster.
 
 ## itch.io packaging
 
