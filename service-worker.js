@@ -1,17 +1,18 @@
 'use strict';
 
-const CACHE_NAME = 'ashvault-build-6';
+const CACHE_NAME = 'ashvault-build-7';
 const CORE_ASSETS = [
   './',
   './index.html',
-  './styles.css?v=6',
-  './manifest.webmanifest?v=6',
-  './game-core.js?v=6',
-  './game-combat.js?v=6',
-  './pixel-assets.js?v=6',
-  './game-render-v4.js?v=6',
-  './production-mobile.js?v=6',
-  './release-enhancements.js?v=6'
+  './styles.css?v=7',
+  './manifest.webmanifest?v=7',
+  './game-core.js?v=7',
+  './game-combat.js?v=7',
+  './route-system.js?v=7',
+  './pixel-assets.js?v=7',
+  './game-render-v4.js?v=7',
+  './production-mobile.js?v=7',
+  './release-enhancements.js?v=7'
 ];
 
 self.addEventListener('install', (event) => {

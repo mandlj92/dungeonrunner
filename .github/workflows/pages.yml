@@ -41,25 +41,32 @@ jobs:
         if: steps.smoke.outcome == 'failure'
         run: exit 1
 
+      - name: Test branching routes
+        run: node tests/route-system-test.js
+
       - name: Validate JavaScript syntax
         run: |
           node --check game-core.js
           node --check game-combat.js
+          node --check route-system.js
           node --check pixel-assets.js
           node --check game-render-v4.js
           node --check production-mobile.js
           node --check release-enhancements.js
           node --check service-worker.js
           node --check tests/smoke-test.js
+          node --check tests/route-system-test.js
           node --check tests/diagnostic-hook.js
 
       - name: Validate release references
         run: |
           grep -q 'viewport-fit=cover' index.html
           grep -q 'manifest.webmanifest' index.html
+          grep -q 'route-system.js' index.html
           grep -q 'production-mobile.js' index.html
           grep -q 'release-enhancements.js' index.html
           test -f manifest.webmanifest
+          test -f route-system.js
           test -f production-mobile.js
           test -f release-enhancements.js
           test -f service-worker.js
@@ -70,7 +77,7 @@ jobs:
       - name: Prepare static site
         run: |
           mkdir -p _site
-          cp index.html styles.css manifest.webmanifest service-worker.js game-core.js game-combat.js pixel-assets.js game-render-v4.js production-mobile.js release-enhancements.js _site/
+          cp index.html styles.css manifest.webmanifest service-worker.js game-core.js game-combat.js route-system.js pixel-assets.js game-render-v4.js production-mobile.js release-enhancements.js _site/
           printf '{"commit":"%s","run":%s,"built_at":"%s"}\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$(date -u +%FT%TZ)" > _site/build-info.json
           touch _site/.nojekyll
 
@@ -104,7 +111,7 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Verify live Build 6 deployment
+      - name: Verify live Build 7 deployment
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
           EXPECTED_SHA: ${{ github.sha }}
@@ -113,10 +120,12 @@ jobs:
           ROOT="${PAGE_URL%/}/"
           for attempt in {1..12}; do
             if curl -fsSL -H 'Cache-Control: no-cache' "${ROOT}?verify=${EXPECTED_SHA}" -o /tmp/ashvault-index.html \
-              && grep -q 'PIXEL ART EDITION · BUILD 6' /tmp/ashvault-index.html \
+              && grep -q 'PIXEL ART EDITION · BUILD 7' /tmp/ashvault-index.html \
+              && grep -q 'route-system.js?v=7' /tmp/ashvault-index.html \
               && curl -fsSL -H 'Cache-Control: no-cache' "${ROOT}build-info.json?verify=${EXPECTED_SHA}" -o /tmp/build-info.json \
               && grep -q "${EXPECTED_SHA}" /tmp/build-info.json \
-              && curl -fsSL -H 'Cache-Control: no-cache' "${ROOT}production-mobile.js?v=6&verify=${EXPECTED_SHA}" >/dev/null \
+              && curl -fsSL -H 'Cache-Control: no-cache' "${ROOT}route-system.js?v=7&verify=${EXPECTED_SHA}" >/dev/null \
+              && curl -fsSL -H 'Cache-Control: no-cache' "${ROOT}production-mobile.js?v=7&verify=${EXPECTED_SHA}" >/dev/null \
               && curl -fsSL -H 'Cache-Control: no-cache' "${ROOT}service-worker.js?verify=${EXPECTED_SHA}" >/dev/null; then
               echo "Verified live deployment at ${ROOT}"
               cat /tmp/build-info.json
@@ -125,5 +134,5 @@ jobs:
             echo "Live site not updated yet; retrying in 10 seconds (${attempt}/12)."
             sleep 10
           done
-          echo 'GitHub Pages did not serve the expected Build 6 commit within two minutes.' >&2
+          echo 'GitHub Pages did not serve the expected Build 7 commit within two minutes.' >&2
           exit 1
