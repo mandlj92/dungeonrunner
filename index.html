@@ -9,9 +9,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Ashvault" />
   <meta name="format-detection" content="telephone=no" />
-  <link rel="manifest" href="manifest.webmanifest?v=8" />
+  <link rel="manifest" href="manifest.webmanifest?v=9" />
   <title>Dungeon Run: Ashvault</title>
-  <link rel="stylesheet" href="styles.css?v=8" />
+  <link rel="stylesheet" href="styles.css?v=9" />
 </head>
 <body>
   <main id="app">
@@ -19,8 +19,8 @@
     <section id="menu" class="panel visible">
       <p class="eyebrow">DUNGEON RUN</p>
       <h1>ASHVAULT</h1>
-      <p class="version">TACTICAL PIXEL EDITION · BUILD 8</p>
-      <p class="lede">Choose your route through ten cursed chambers in a richly shaded GBA-era tactical-fantasy presentation.</p>
+      <p class="version">TACTICAL PIXEL EDITION · BUILD 9</p>
+      <p class="lede">Choose your route through ten cursed chambers in a crisp GBA-era tactical-fantasy presentation.</p>
       <div class="menu-grid">
         <button id="startBtn">BEGIN RUN</button>
         <button id="armoryBtn" class="secondary">PERMANENT ARMORY</button>
@@ -34,32 +34,20 @@
     <section id="treasure" class="panel modal"></section>
     <section id="armory" class="panel modal"></section>
     <section id="scores" class="panel modal"></section>
-    <section id="pause" class="panel modal">
-      <p class="eyebrow">RUN SUSPENDED</p><h2>PAUSED</h2>
-      <button id="resumeBtn">RESUME</button><button id="quitBtn" class="danger">ABANDON RUN</button>
-    </section>
+    <section id="pause" class="panel modal"><p class="eyebrow">RUN SUSPENDED</p><h2>PAUSED</h2><button id="resumeBtn">RESUME</button><button id="quitBtn" class="danger">ABANDON RUN</button></section>
     <section id="summary" class="panel modal"></section>
     <div id="toast"></div>
   </main>
-
-  <aside id="rotatePrompt" role="dialog" aria-modal="true" aria-labelledby="rotateTitle">
-    <div class="rotate-card">
-      <div class="phone-glyph" aria-hidden="true">↻</div>
-      <p class="eyebrow">MOBILE DISPLAY</p>
-      <h2 id="rotateTitle">ROTATE TO LANDSCAPE</h2>
-      <p>Ashvault is designed around a 16:9 combat field. Landscape provides readable sprites and full-size touch controls.</p>
-      <button id="rotateAnywayBtn" class="secondary">CONTINUE IN PORTRAIT</button>
-    </div>
-  </aside>
-
-  <script src="game-core.js?v=8"></script>
-  <script src="game-combat.js?v=8"></script>
-  <script src="route-system.js?v=8"></script>
-  <script src="pixel-assets.js?v=8"></script>
-  <script src="game-render-v4.js?v=8"></script>
-  <script src="gba-visuals.js?v=8"></script>
-  <script src="gba-sprite-fix.js?v=8"></script>
-  <script src="production-mobile.js?v=8"></script>
-  <script src="release-enhancements.js?v=8"></script>
+  <aside id="rotatePrompt" role="dialog" aria-modal="true" aria-labelledby="rotateTitle"><div class="rotate-card"><div class="phone-glyph" aria-hidden="true">↻</div><p class="eyebrow">MOBILE DISPLAY</p><h2 id="rotateTitle">ROTATE TO LANDSCAPE</h2><p>Ashvault is designed around a 16:9 combat field. Landscape provides readable sprites and full-size touch controls.</p><button id="rotateAnywayBtn" class="secondary">CONTINUE IN PORTRAIT</button></div></aside>
+  <script src="game-core.js?v=9"></script>
+  <script src="game-combat.js?v=9"></script>
+  <script src="route-system.js?v=9"></script>
+  <script src="pixel-assets.js?v=9"></script>
+  <script src="game-render-v4.js?v=9"></script>
+  <script src="gba-visuals.js?v=9"></script>
+  <script src="gba-sprite-fix.js?v=9"></script>
+  <script src="production-mobile.js?v=9"></script>
+  <script src="release-enhancements.js?v=9"></script>
+  <script src="crisp-display.js?v=9"></script>
 </body>
 </html>
