@@ -6,6 +6,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
+const phase = (name) => console.log(`[smoke] ${name}`);
 
 class FakeClassList {
   constructor() { this.values = new Set(); }
@@ -39,7 +40,7 @@ class FakeElement {
 }
 
 function makeContext2D() {
-  const context = {
+  return {
     canvas: null,
     fillStyle: '#000',
     strokeStyle: '#000',
@@ -52,12 +53,11 @@ function makeContext2D() {
     save() {}, restore() {}, translate() {}, scale() {}, rotate() {},
     clearRect() {}, fillRect() {}, strokeRect() {}, drawImage() {},
     beginPath() {}, closePath() {}, moveTo() {}, lineTo() {}, arc() {}, rect() {},
-    fill() {}, stroke() {}, fillText() {}, strokeText() {},
+    fill() {}, stroke() {}, fillText() {}, strokeText() {}, clip() {},
     measureText(text) { return { width: String(text).length * 5 }; },
     createLinearGradient() { return { addColorStop() {} }; },
     createRadialGradient() { return { addColorStop() {} }; }
   };
-  return context;
 }
 
 function makeCanvas() {
@@ -96,7 +96,6 @@ const document = {
   addEventListener() {},
   removeEventListener() {}
 };
-
 document.documentElement.style = { setProperty() {} };
 
 const localStore = new Map();
@@ -127,15 +126,26 @@ class FakeAudioContext {
   }
 }
 
+let seed = 0x6d2b79f5;
+const deterministicMath = Object.create(Math);
+deterministicMath.random = () => {
+  seed |= 0;
+  seed = seed + 0x6d2b79f5 | 0;
+  let value = Math.imul(seed ^ seed >>> 15, 1 | seed);
+  value = value + Math.imul(value ^ value >>> 7, 61 | value) ^ value;
+  return ((value ^ value >>> 14) >>> 0) / 4294967296;
+};
+
 const sandbox = {
   console,
   document,
   localStorage,
   structuredClone,
+  URL,
   URLSearchParams,
-  location: { search: '', href: 'https://example.test/' },
+  location: { search: '', href: 'https://example.test/', protocol: 'https:' },
   performance,
-  Math,
+  Math: deterministicMath,
   Date,
   JSON,
   Promise,
@@ -164,16 +174,25 @@ const scripts = [
   'game-combat.js',
   'pixel-assets.js',
   'game-render-v4.js',
-  'production-mobile.js'
+  'production-mobile.js',
+  'release-enhancements.js'
 ];
 
+phase('loading browser scripts');
 for (const file of scripts) {
-  const source = fs.readFileSync(path.join(root, file), 'utf8');
-  vm.runInContext(source, context, { filename: file });
+  try {
+    const source = fs.readFileSync(path.join(root, file), 'utf8');
+    vm.runInContext(source, context, { filename: file });
+    console.log(`[smoke] loaded ${file}`);
+  } catch (error) {
+    console.error(`[smoke] failed while loading ${file}`);
+    throw error;
+  }
 }
 
+phase('checking assets and new run');
 vm.runInContext(`
-  assertBuild = (condition, message) => { if (!condition) throw new Error(message); };
+  const assertBuild = (condition, message) => { if (!condition) throw new Error(message); };
 
   assertBuild(typeof resetRun === 'function', 'resetRun was not loaded');
   assertBuild(typeof draw === 'function', 'draw was not loaded');
@@ -185,7 +204,10 @@ vm.runInContext(`
   assertBuild(state === 'playing', 'Run did not enter playing state');
   assertBuild(roomNo === 1, 'First chamber was not created');
   assertBuild(player && enemies.length > 0, 'Player or enemy wave was not created');
+`, context);
 
+phase('checking movement and player attacks');
+vm.runInContext(`
   const startingX = player.x;
   keys.KeyD = true;
   update(0.05);
@@ -203,7 +225,10 @@ vm.runInContext(`
   activateNova();
   assertBuild(player.nova === 0, 'Nova charge did not reset');
   assertBuild(waves.length > 0, 'Nova did not create a visible wave');
+`, context);
 
+phase('checking enemy telegraph and projectile');
+vm.runInContext(`
   bullets = [];
   const shooter = makeEnemy('shooter', 45, 40);
   enemies = [shooter];
@@ -212,7 +237,10 @@ vm.runInContext(`
   assertBuild(shooter.shotWindup > 0, 'Shooter attack did not enter wind-up');
   update(0.30);
   assertBuild(bullets.some((bullet) => bullet.enemy), 'Shooter wind-up did not produce a projectile');
+`, context);
 
+phase('checking renderer and pause lifecycle');
+vm.runInContext(`
   draw();
   togglePause();
   assertBuild(paused === true && state === 'pause', 'Pause state did not activate');
@@ -220,6 +248,7 @@ vm.runInContext(`
   assertBuild(paused === false && state === 'playing', 'Pause state did not resume');
 `, context);
 
+phase('checking mobile manifest');
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.webmanifest'), 'utf8'));
 assert.equal(manifest.orientation, 'landscape');
 assert.equal(manifest.display, 'fullscreen');
