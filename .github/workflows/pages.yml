@@ -24,7 +24,22 @@ jobs:
           show-progress: false
 
       - name: Run production smoke test
+        id: smoke
+        continue-on-error: true
         run: node --require ./tests/diagnostic-hook.js tests/smoke-test.js
+
+      - name: Upload smoke-test failure
+        if: steps.smoke.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-error
+          path: smoke-error.txt
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Block release on smoke-test failure
+        if: steps.smoke.outcome == 'failure'
+        run: exit 1
 
       - name: Validate JavaScript syntax
         run: |
