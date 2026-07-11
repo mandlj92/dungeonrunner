@@ -2,7 +2,8 @@
 
 (() => {
   const app = document.querySelector('#app');
-  if (!app) return;
+  const gameCanvas = document.querySelector('#game');
+  if (!app || !gameCanvas) return;
 
   let resizeTimer = 0;
 
@@ -13,19 +14,8 @@
   function viewportBox() {
     const root = document.documentElement;
     const visual = window.visualViewport;
-
-    const widths = [
-      finitePositive(window.innerWidth),
-      finitePositive(root.clientWidth),
-      finitePositive(visual?.width)
-    ].filter(Boolean);
-
-    const heights = [
-      finitePositive(window.innerHeight),
-      finitePositive(root.clientHeight),
-      finitePositive(visual?.height)
-    ].filter(Boolean);
-
+    const widths = [window.innerWidth, root.clientWidth, visual?.width].map(finitePositive).filter(Boolean);
+    const heights = [window.innerHeight, root.clientHeight, visual?.height].map(finitePositive).filter(Boolean);
     return {
       width: Math.max(...widths, 320),
       height: Math.max(...heights, 180)
@@ -34,22 +24,27 @@
 
   function fitGame() {
     const { width: viewportWidth, height: viewportHeight } = viewportBox();
-    const style = getComputedStyle(document.documentElement);
-    const safeLeft = parseFloat(style.getPropertyValue('--safe-left')) || 0;
-    const safeRight = parseFloat(style.getPropertyValue('--safe-right')) || 0;
-    const safeTop = parseFloat(style.getPropertyValue('--safe-top')) || 0;
-    const safeBottom = parseFloat(style.getPropertyValue('--safe-bottom')) || 0;
+    const rootStyle = getComputedStyle(document.documentElement);
+    const safeLeft = parseFloat(rootStyle.getPropertyValue('--safe-left')) || 0;
+    const safeRight = parseFloat(rootStyle.getPropertyValue('--safe-right')) || 0;
+    const safeTop = parseFloat(rootStyle.getPropertyValue('--safe-top')) || 0;
+    const safeBottom = parseFloat(rootStyle.getPropertyValue('--safe-bottom')) || 0;
 
     const availableWidth = Math.max(320, viewportWidth - safeLeft - safeRight);
     const availableHeight = Math.max(180, viewportHeight - safeTop - safeBottom);
-    const scale = Math.max(1, Math.min(availableWidth / 16, availableHeight / 9));
-    const width = Math.floor(scale * 16);
-    const height = Math.floor(scale * 9);
+    const scale = Math.min(availableWidth / 16, availableHeight / 9);
+    const width = Math.max(320, Math.floor(scale * 16));
+    const height = Math.max(180, Math.floor(scale * 9));
 
     app.style.setProperty('width', `${width}px`, 'important');
     app.style.setProperty('height', `${height}px`, 'important');
     app.style.setProperty('max-width', 'none', 'important');
     app.style.setProperty('max-height', 'none', 'important');
+
+    gameCanvas.style.setProperty('width', '100%', 'important');
+    gameCanvas.style.setProperty('height', '100%', 'important');
+    gameCanvas.style.setProperty('max-width', 'none', 'important');
+    gameCanvas.style.setProperty('max-height', 'none', 'important');
 
     document.documentElement.style.setProperty('--viewport-width', `${viewportWidth}px`);
     document.documentElement.style.setProperty('--viewport-height', `${viewportHeight}px`);
@@ -67,8 +62,8 @@
   window.addEventListener('resize', () => scheduleFit(20), { passive: true });
   window.addEventListener('orientationchange', () => {
     scheduleFit(50);
-    scheduleFit(220);
-    scheduleFit(600);
+    setTimeout(fitGame, 220);
+    setTimeout(fitGame, 600);
   }, { passive: true });
   window.addEventListener('pageshow', () => scheduleFit(0), { passive: true });
   document.addEventListener('fullscreenchange', () => scheduleFit(20), { passive: true });
@@ -76,6 +71,6 @@
   window.visualViewport?.addEventListener('scroll', () => scheduleFit(20), { passive: true });
 
   fitGame();
-  scheduleFit(100);
-  scheduleFit(500);
+  setTimeout(fitGame, 100);
+  setTimeout(fitGame, 500);
 })();
