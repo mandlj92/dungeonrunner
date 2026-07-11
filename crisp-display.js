@@ -27,6 +27,7 @@
     app.style.height = `${height}px`;
     app.style.maxWidth = 'none';
     app.style.maxHeight = 'none';
+    app.style.border = '0';
 
     canvas.width = width;
     canvas.height = height;
@@ -41,9 +42,8 @@
     document.body.classList.toggle('integer-letterbox', width < viewport.width || height < viewport.height);
   }
 
-  const originalDrawPost = drawPost;
   drawPost = function crispDrawPost() {
-    // Keep impact flashes, but remove full-screen scanlines and soft overlays.
+    // Preserve damage feedback without the soft scanline layer that blurred pixels.
     if (flash > 0) {
       g.fillStyle = `rgba(255,80,70,${flash * 0.34})`;
       g.fillRect(0, 0, W, H);
