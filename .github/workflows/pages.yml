@@ -28,14 +28,23 @@ jobs:
           node --check pixel-assets.js
           node --check game-render-v4.js
           node --check production-mobile.js
+          node --check release-enhancements.js
+          node --check service-worker.js
+          node --check tests/smoke-test.js
+
+      - name: Run production smoke test
+        run: node tests/smoke-test.js
 
       - name: Validate release references
         run: |
           grep -q 'viewport-fit=cover' index.html
           grep -q 'manifest.webmanifest' index.html
           grep -q 'production-mobile.js' index.html
+          grep -q 'release-enhancements.js' index.html
           test -f manifest.webmanifest
           test -f production-mobile.js
+          test -f release-enhancements.js
+          test -f service-worker.js
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -43,7 +52,7 @@ jobs:
       - name: Prepare static site
         run: |
           mkdir -p _site
-          cp index.html styles.css manifest.webmanifest game-core.js game-combat.js pixel-assets.js game-render-v4.js production-mobile.js _site/
+          cp index.html styles.css manifest.webmanifest service-worker.js game-core.js game-combat.js pixel-assets.js game-render-v4.js production-mobile.js release-enhancements.js _site/
           touch _site/.nojekyll
 
       - name: Upload Pages artifact
