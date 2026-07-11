@@ -1,0 +1,12 @@
+{
+  "name": "Dungeon Run: Ashvault",
+  "short_name": "Ashvault",
+  "description": "A browser-based pixel-art roguelite.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#080810",
+  "theme_color": "#101018",
+  "categories": ["games", "entertainment"]
+}
