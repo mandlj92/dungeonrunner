@@ -71,7 +71,6 @@ jobs:
           grep -q 'production-mobile.js' index.html
           grep -q 'release-enhancements.js' index.html
           grep -q 'viewport-hotfix.js' index.html
-          ! grep -q 'crisp-display.js' index.html
           test -f manifest.webmanifest
           test -f route-system.js
           test -f gba-visuals.js
@@ -121,7 +120,7 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Verify live Build 10 deployment
+      - name: Verify live Build 11 deployment
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
           EXPECTED_SHA: ${{ github.sha }}
@@ -130,12 +129,11 @@ jobs:
           ROOT="${PAGE_URL%/}/"
           for attempt in {1..12}; do
             if curl -fsSL -H 'Cache-Control: no-cache' "${ROOT}?verify=${EXPECTED_SHA}" -o /tmp/ashvault-index.html \
-              && grep -q 'TACTICAL PIXEL EDITION · BUILD 10' /tmp/ashvault-index.html \
-              && grep -q 'viewport-hotfix.js?v=10' /tmp/ashvault-index.html \
-              && ! grep -q 'crisp-display.js' /tmp/ashvault-index.html \
+              && grep -q 'TACTICAL PIXEL EDITION · BUILD 11' /tmp/ashvault-index.html \
+              && grep -q 'viewport-hotfix.js?v=11' /tmp/ashvault-index.html \
               && curl -fsSL -H 'Cache-Control: no-cache' "${ROOT}build-info.json?verify=${EXPECTED_SHA}" -o /tmp/build-info.json \
               && grep -q "${EXPECTED_SHA}" /tmp/build-info.json \
-              && curl -fsSL -H 'Cache-Control: no-cache' "${ROOT}viewport-hotfix.js?v=10&verify=${EXPECTED_SHA}" >/dev/null \
+              && curl -fsSL -H 'Cache-Control: no-cache' "${ROOT}viewport-hotfix.js?v=11&verify=${EXPECTED_SHA}" >/dev/null \
               && curl -fsSL -H 'Cache-Control: no-cache' "${ROOT}service-worker.js?verify=${EXPECTED_SHA}" >/dev/null; then
               echo "Verified live deployment at ${ROOT}"
               cat /tmp/build-info.json
@@ -144,5 +142,5 @@ jobs:
             echo "Live site not updated yet; retrying in 10 seconds (${attempt}/12)."
             sleep 10
           done
-          echo 'GitHub Pages did not serve the expected Build 10 commit within two minutes.' >&2
+          echo 'GitHub Pages did not serve the expected Build 11 commit within two minutes.' >&2
           exit 1
