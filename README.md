@@ -1,4 +1,4 @@
-# Dungeon Run: Ashvault — GBA Edition
+# Dungeon Run: Ashvault — Pixel Art Edition
 
 A complete, zero-build browser roguelite plus the original Godot prototype.
 
@@ -10,11 +10,26 @@ Live build:
 
 Every push to `main` deploys through `.github/workflows/pages.yml`.
 
-## GBA Edition
+## Build 4: production pixel asset pass
 
-The browser game now renders internally at **320 × 180** and scales to the display with nearest-neighbor rendering. The visual language uses a restricted handheld-era palette, tiled floors, hard pixel shadows, hand-drawn pixel sprites, low-resolution effects, bitmap-style HUD elements, and pixel-framed menus.
+The browser game now uses a dedicated `pixel-assets.js` library containing hand-authored raster sprites and tiles rather than relying on geometric placeholder characters.
 
-## New systems in Build 3
+Implemented assets include:
+
+- Directional player sprites with idle, walking, shooting, dashing, and hurt frames
+- Directional Stalker sprites with movement, attack, and hurt frames
+- Directional Brute sprites with movement, attack, and hurt frames
+- Directional Shooter sprites with movement, firing, recoil, and hurt frames
+- Dedicated sprites for the Vault Charger, Gravebinder, Iron Revenant, and Warden
+- Three dungeon floor tiles and repeating wall tiles
+- Explosive urn, treasure chest, heart, Ember, and weapon icons
+- Player and enemy projectiles, impact sparks, and Ash Nova graphics
+- Pixel HUD portrait, framed health and Nova meters, score panel, bounty panel, and weapon bar
+- Runtime animation selection based on movement, aim direction, firing, dashing, attacks, and damage
+
+The game still renders internally at **320 × 180** and scales to the display using nearest-neighbor rendering.
+
+## Run systems
 
 1. **Three-weapon arsenal** — Cinder Pistol, Ash Scattergun, and Volt Scepter, with weapon switching and per-run weapon ranks.
 2. **Elemental combat** — the pistol inflicts burn, the scattergun knocks enemies back, and the scepter chains lightning between nearby targets.
@@ -57,7 +72,8 @@ Put these files in a ZIP archive:
 - `styles.css`
 - `game-core.js`
 - `game-combat.js`
-- `game-render.js`
+- `pixel-assets.js`
+- `game-render-v4.js`
 
 Create an itch.io HTML project, upload the ZIP, select **This file will be played in the browser**, use a 16:9 viewport such as 1280 × 720, and allow fullscreen.
 
