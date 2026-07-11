@@ -10,6 +10,37 @@ Live build:
 
 Every push to `main` deploys through `.github/workflows/pages.yml`.
 
+## Build 7: branching dungeon routes
+
+Build 7 adds a route decision after each standard chamber so every run develops differently before the fixed guardian fights in Chambers 5 and 10.
+
+### Route types
+
+- **Ashen Passage** — standard combat and reliable relic progress
+- **Crowned Gate** — elite enemies, increased score, and bonus Embers
+- **Gilded Vault** — guarded combat followed by a secret-vault chest
+- **Crimson Well** — restores 28% max vitality and reduces the enemy formation
+- **Cursed Shrine** — grants one of three permanent blessings with an immediate chamber curse
+- **Veiled Door** — hides the chamber type until entry
+
+Route options are generated from a run seed, avoid duplicate choices, and preserve fixed Iron Revenant and Warden gates. The route system also guarantees that a reasonable recovery option is offered before the final descent.
+
+### Build 7 production work
+
+- Dedicated `route-system.js` layer that extends the existing run flow without rewriting combat systems
+- Deterministic three-way route generation for future seeded and daily-run support
+- Route-specific enemy scaling, elite promotion, recovery, treasure, shrine, score, and Ember effects
+- Offline caching and itch.io packaging for the new route asset
+- CI syntax validation, release-reference checks, and route-system unit coverage
+
+## Build 6: offline release packaging
+
+- Offline-first service worker and installable web-app behavior
+- Touch pause control and background auto-pause
+- Production runtime smoke testing and diagnostic artifacts
+- Packaged itch.io HTML5 artifact on every release
+- Live deployment verification against the expected commit
+
 ## Build 5: mobile and production QA pass
 
 Build 5 formats the game as a landscape-first mobile web app and tightens combat presentation.
@@ -42,8 +73,6 @@ Append `?qa=1` to the live URL to activate the internal QA overlay:
 
 `https://mandlj92.github.io/dungeonrunner/?qa=1`
 
-The Pages workflow now checks every JavaScript file with `node --check` before deployment and verifies that all mobile release files are present.
-
 ## Pixel asset system
 
 The browser game uses a dedicated `pixel-assets.js` library containing hand-authored raster sprites and tiles rather than geometric placeholder characters.
@@ -64,11 +93,12 @@ The game renders internally at **320 × 180** and scales using nearest-neighbor 
 
 ## Run systems
 
-1. **Three-weapon arsenal** — Cinder Pistol, Ash Scattergun, and Volt Scepter, with weapon switching and per-run weapon ranks.
-2. **Elemental combat** — the pistol inflicts burn, the scattergun knocks enemies back, and the scepter chains lightning between nearby targets.
-3. **Iron Revenant miniboss** — a dedicated Chamber 5 fight with telegraphed slams and radial projectile attacks.
-4. **Secret treasure vaults** — Chambers 3 and 7 offer armament, vitality, or Ember rewards before the normal relic choice.
-5. **Run bounties and achievements** — each run receives a scored objective worth bonus Embers, while permanent achievements track major milestones.
+1. **Branching dungeon routes** — choose between combat, elite, treasure, healing, shrine, and mystery chambers.
+2. **Three-weapon arsenal** — Cinder Pistol, Ash Scattergun, and Volt Scepter, with weapon switching and per-run weapon ranks.
+3. **Elemental combat** — the pistol inflicts burn, the scattergun knocks enemies back, and the scepter chains lightning between nearby targets.
+4. **Iron Revenant miniboss** — a dedicated Chamber 5 fight with telegraphed slams and radial projectile attacks.
+5. **Secret treasure vaults** — guarded vault routes and Chambers 3 and 7 offer armament, vitality, or Ember rewards.
+6. **Run bounties and achievements** — each run receives a scored objective worth bonus Embers, while permanent achievements track major milestones.
 
 ## Existing features
 
@@ -104,11 +134,14 @@ Put these files in a ZIP archive:
 - `index.html`
 - `styles.css`
 - `manifest.webmanifest`
+- `service-worker.js`
 - `game-core.js`
 - `game-combat.js`
+- `route-system.js`
 - `pixel-assets.js`
 - `game-render-v4.js`
 - `production-mobile.js`
+- `release-enhancements.js`
 
 Create an itch.io HTML project, upload the ZIP, select **This file will be played in the browser**, use a 16:9 viewport such as 1280 × 720, and allow fullscreen.
 
