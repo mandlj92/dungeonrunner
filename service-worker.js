@@ -1,30 +1,15 @@
 'use strict';
 
-const CACHE_NAME = 'ashvault-build-8';
+const CACHE_NAME = 'ashvault-build-9';
 const CORE_ASSETS = [
-  './',
-  './index.html',
-  './styles.css?v=8',
-  './manifest.webmanifest?v=8',
-  './game-core.js?v=8',
-  './game-combat.js?v=8',
-  './route-system.js?v=8',
-  './pixel-assets.js?v=8',
-  './game-render-v4.js?v=8',
-  './gba-visuals.js?v=8',
-  './gba-sprite-fix.js?v=8',
-  './production-mobile.js?v=8',
-  './release-enhancements.js?v=8'
+  './', './index.html', './styles.css?v=9', './manifest.webmanifest?v=9',
+  './game-core.js?v=9', './game-combat.js?v=9', './route-system.js?v=9',
+  './pixel-assets.js?v=9', './game-render-v4.js?v=9', './gba-visuals.js?v=9',
+  './gba-sprite-fix.js?v=9', './production-mobile.js?v=9',
+  './release-enhancements.js?v=9', './crisp-display.js?v=9'
 ];
-
-self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS)).then(() => self.skipWaiting()));
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))).then(() => self.clients.claim()));
-});
-
+self.addEventListener('install', (event) => { event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS)).then(() => self.skipWaiting())); });
+self.addEventListener('activate', (event) => { event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET') return;
