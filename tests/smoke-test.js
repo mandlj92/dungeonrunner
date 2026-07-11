@@ -84,6 +84,7 @@ elements.set('game', gameCanvas);
 const document = {
   hidden: false,
   fullscreenElement: null,
+  body: new FakeElement('body'),
   documentElement: new FakeElement('html'),
   querySelector(selector) {
     if (!selector.startsWith('#')) return new FakeElement(selector);
