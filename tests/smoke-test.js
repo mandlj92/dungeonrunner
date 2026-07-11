@@ -1,0 +1,227 @@
+'use strict';
+
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+
+const root = path.resolve(__dirname, '..');
+
+class FakeClassList {
+  constructor() { this.values = new Set(); }
+  add(...names) { names.forEach((name) => this.values.add(name)); }
+  remove(...names) { names.forEach((name) => this.values.delete(name)); }
+  toggle(name, force) {
+    if (force === true) { this.values.add(name); return true; }
+    if (force === false) { this.values.delete(name); return false; }
+    if (this.values.has(name)) { this.values.delete(name); return false; }
+    this.values.add(name); return true;
+  }
+  contains(name) { return this.values.has(name); }
+}
+
+class FakeElement {
+  constructor(id = '') {
+    this.id = id;
+    this.classList = new FakeClassList();
+    this.style = { setProperty() {} };
+    this.dataset = {};
+    this.textContent = '';
+    this.innerHTML = '';
+    this.onclick = null;
+    this.width = 0;
+    this.height = 0;
+  }
+  addEventListener() {}
+  removeEventListener() {}
+  setAttribute() {}
+  requestFullscreen() { return Promise.resolve(); }
+}
+
+function makeContext2D() {
+  const context = {
+    canvas: null,
+    fillStyle: '#000',
+    strokeStyle: '#000',
+    lineWidth: 1,
+    font: '',
+    textAlign: 'left',
+    globalAlpha: 1,
+    globalCompositeOperation: 'source-over',
+    imageSmoothingEnabled: false,
+    save() {}, restore() {}, translate() {}, scale() {}, rotate() {},
+    clearRect() {}, fillRect() {}, strokeRect() {}, drawImage() {},
+    beginPath() {}, closePath() {}, moveTo() {}, lineTo() {}, arc() {}, rect() {},
+    fill() {}, stroke() {}, fillText() {}, strokeText() {},
+    measureText(text) { return { width: String(text).length * 5 }; },
+    createLinearGradient() { return { addColorStop() {} }; },
+    createRadialGradient() { return { addColorStop() {} }; }
+  };
+  return context;
+}
+
+function makeCanvas() {
+  const canvas = new FakeElement('canvas');
+  canvas.width = 1280;
+  canvas.height = 720;
+  const context = makeContext2D();
+  context.canvas = canvas;
+  canvas.getContext = () => context;
+  canvas.getBoundingClientRect = () => ({ left: 0, top: 0, width: 1280, height: 720 });
+  return canvas;
+}
+
+const gameCanvas = makeCanvas();
+const elements = new Map();
+const ids = [
+  'app', 'menu', 'choice', 'treasure', 'armory', 'scores', 'pause', 'summary',
+  'toast', 'metaLine', 'startBtn', 'armoryBtn', 'scoresBtn', 'resumeBtn', 'quitBtn',
+  'rotatePrompt', 'rotateAnywayBtn'
+];
+ids.forEach((id) => elements.set(id, new FakeElement(id)));
+elements.set('game', gameCanvas);
+
+const document = {
+  hidden: false,
+  fullscreenElement: null,
+  documentElement: new FakeElement('html'),
+  querySelector(selector) {
+    if (!selector.startsWith('#')) return new FakeElement(selector);
+    const id = selector.slice(1);
+    if (!elements.has(id)) elements.set(id, new FakeElement(id));
+    return elements.get(id);
+  },
+  querySelectorAll() { return []; },
+  createElement(tag) { return tag === 'canvas' ? makeCanvas() : new FakeElement(tag); },
+  addEventListener() {},
+  removeEventListener() {}
+};
+
+document.documentElement.style = { setProperty() {} };
+
+const localStore = new Map();
+const localStorage = {
+  getItem(key) { return localStore.has(key) ? localStore.get(key) : null; },
+  setItem(key, value) { localStore.set(key, String(value)); },
+  removeItem(key) { localStore.delete(key); }
+};
+
+class FakeAudioNode {
+  connect() { return this; }
+  start() {}
+  stop() {}
+}
+
+class FakeAudioContext {
+  constructor() { this.currentTime = 0; this.destination = {}; }
+  createOscillator() {
+    const node = new FakeAudioNode();
+    node.frequency = { setValueAtTime() {}, exponentialRampToValueAtTime() {} };
+    node.type = 'square';
+    return node;
+  }
+  createGain() {
+    const node = new FakeAudioNode();
+    node.gain = { setValueAtTime() {}, exponentialRampToValueAtTime() {} };
+    return node;
+  }
+}
+
+const sandbox = {
+  console,
+  document,
+  localStorage,
+  structuredClone,
+  URLSearchParams,
+  location: { search: '', href: 'https://example.test/' },
+  performance,
+  Math,
+  Date,
+  JSON,
+  Promise,
+  setTimeout() { return 1; },
+  clearTimeout() {},
+  requestAnimationFrame() { return 1; },
+  cancelAnimationFrame() {},
+  addEventListener() {},
+  removeEventListener() {},
+  matchMedia() { return { matches: false, addEventListener() {}, removeEventListener() {} }; },
+  navigator: {
+    maxTouchPoints: 0,
+    getGamepads() { return []; },
+    vibrate() { return true; },
+    serviceWorker: { register() { return Promise.resolve({ scope: './' }); } }
+  },
+  screen: { orientation: { lock() { return Promise.resolve(); } } },
+  AudioContext: FakeAudioContext,
+  webkitAudioContext: FakeAudioContext
+};
+sandbox.window = sandbox;
+
+const context = vm.createContext(sandbox);
+const scripts = [
+  'game-core.js',
+  'game-combat.js',
+  'pixel-assets.js',
+  'game-render-v4.js',
+  'production-mobile.js'
+];
+
+for (const file of scripts) {
+  const source = fs.readFileSync(path.join(root, file), 'utf8');
+  vm.runInContext(source, context, { filename: file });
+}
+
+vm.runInContext(`
+  assertBuild = (condition, message) => { if (!condition) throw new Error(message); };
+
+  assertBuild(typeof resetRun === 'function', 'resetRun was not loaded');
+  assertBuild(typeof draw === 'function', 'draw was not loaded');
+  assertBuild(typeof PixelArt === 'object', 'PixelArt library was not loaded');
+  assertBuild(PixelArt.spriteFor('player', 'walk', 'right', 0).width > 0, 'Player sprite is missing');
+  assertBuild(PixelArt.spriteFor('warden', 'idle', 'down', 0).width >= 30, 'Warden sprite scale regressed');
+
+  resetRun();
+  assertBuild(state === 'playing', 'Run did not enter playing state');
+  assertBuild(roomNo === 1, 'First chamber was not created');
+  assertBuild(player && enemies.length > 0, 'Player or enemy wave was not created');
+
+  const startingX = player.x;
+  keys.KeyD = true;
+  update(0.05);
+  keys.KeyD = false;
+  assertBuild(player.x > startingX, 'Keyboard movement did not update the player');
+
+  bullets = [];
+  player.lastShot = -99;
+  mouse.down = true;
+  update(0.02);
+  mouse.down = false;
+  assertBuild(bullets.some((bullet) => !bullet.enemy), 'Player weapon did not create a projectile');
+
+  player.nova = 100;
+  activateNova();
+  assertBuild(player.nova === 0, 'Nova charge did not reset');
+  assertBuild(waves.length > 0, 'Nova did not create a visible wave');
+
+  bullets = [];
+  const shooter = makeEnemy('shooter', 45, 40);
+  enemies = [shooter];
+  shooter.attack = 0;
+  update(0.02);
+  assertBuild(shooter.shotWindup > 0, 'Shooter attack did not enter wind-up');
+  update(0.30);
+  assertBuild(bullets.some((bullet) => bullet.enemy), 'Shooter wind-up did not produce a projectile');
+
+  draw();
+  togglePause();
+  assertBuild(paused === true && state === 'pause', 'Pause state did not activate');
+  togglePause();
+  assertBuild(paused === false && state === 'playing', 'Pause state did not resume');
+`, context);
+
+const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.webmanifest'), 'utf8'));
+assert.equal(manifest.orientation, 'landscape');
+assert.equal(manifest.display, 'fullscreen');
+
+console.log('Ashvault production smoke test passed.');
