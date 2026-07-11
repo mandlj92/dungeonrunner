@@ -1,18 +1,19 @@
 'use strict';
 
-const CACHE_NAME = 'ashvault-build-7';
+const CACHE_NAME = 'ashvault-build-8';
 const CORE_ASSETS = [
   './',
   './index.html',
-  './styles.css?v=7',
-  './manifest.webmanifest?v=7',
-  './game-core.js?v=7',
-  './game-combat.js?v=7',
-  './route-system.js?v=7',
-  './pixel-assets.js?v=7',
-  './game-render-v4.js?v=7',
-  './production-mobile.js?v=7',
-  './release-enhancements.js?v=7'
+  './styles.css?v=8',
+  './manifest.webmanifest?v=8',
+  './game-core.js?v=8',
+  './game-combat.js?v=8',
+  './route-system.js?v=8',
+  './pixel-assets.js?v=8',
+  './game-render-v4.js?v=8',
+  './gba-visuals.js?v=8',
+  './production-mobile.js?v=8',
+  './release-enhancements.js?v=8'
 ];
 
 self.addEventListener('install', (event) => {
