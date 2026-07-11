@@ -21,13 +21,29 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Validate JavaScript syntax
+        run: |
+          node --check game-core.js
+          node --check game-combat.js
+          node --check pixel-assets.js
+          node --check game-render-v4.js
+          node --check production-mobile.js
+
+      - name: Validate release references
+        run: |
+          grep -q 'viewport-fit=cover' index.html
+          grep -q 'manifest.webmanifest' index.html
+          grep -q 'production-mobile.js' index.html
+          test -f manifest.webmanifest
+          test -f production-mobile.js
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
       - name: Prepare static site
         run: |
           mkdir -p _site
-          cp index.html styles.css game-core.js game-combat.js pixel-assets.js game-render-v4.js _site/
+          cp index.html styles.css manifest.webmanifest game-core.js game-combat.js pixel-assets.js game-render-v4.js production-mobile.js _site/
           touch _site/.nojekyll
 
       - name: Upload Pages artifact
