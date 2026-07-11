@@ -52,6 +52,7 @@ jobs:
           node --check pixel-assets.js
           node --check game-render-v4.js
           node --check gba-visuals.js
+          node --check gba-sprite-fix.js
           node --check production-mobile.js
           node --check release-enhancements.js
           node --check service-worker.js
@@ -65,11 +66,13 @@ jobs:
           grep -q 'manifest.webmanifest' index.html
           grep -q 'route-system.js' index.html
           grep -q 'gba-visuals.js' index.html
+          grep -q 'gba-sprite-fix.js' index.html
           grep -q 'production-mobile.js' index.html
           grep -q 'release-enhancements.js' index.html
           test -f manifest.webmanifest
           test -f route-system.js
           test -f gba-visuals.js
+          test -f gba-sprite-fix.js
           test -f production-mobile.js
           test -f release-enhancements.js
           test -f service-worker.js
@@ -80,7 +83,7 @@ jobs:
       - name: Prepare static site
         run: |
           mkdir -p _site
-          cp index.html styles.css manifest.webmanifest service-worker.js game-core.js game-combat.js route-system.js pixel-assets.js game-render-v4.js gba-visuals.js production-mobile.js release-enhancements.js _site/
+          cp index.html styles.css manifest.webmanifest service-worker.js game-core.js game-combat.js route-system.js pixel-assets.js game-render-v4.js gba-visuals.js gba-sprite-fix.js production-mobile.js release-enhancements.js _site/
           printf '{"commit":"%s","run":%s,"built_at":"%s"}\n' "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$(date -u +%FT%TZ)" > _site/build-info.json
           touch _site/.nojekyll
 
@@ -125,9 +128,11 @@ jobs:
             if curl -fsSL -H 'Cache-Control: no-cache' "${ROOT}?verify=${EXPECTED_SHA}" -o /tmp/ashvault-index.html \
               && grep -q 'TACTICAL PIXEL EDITION · BUILD 8' /tmp/ashvault-index.html \
               && grep -q 'gba-visuals.js?v=8' /tmp/ashvault-index.html \
+              && grep -q 'gba-sprite-fix.js?v=8' /tmp/ashvault-index.html \
               && curl -fsSL -H 'Cache-Control: no-cache' "${ROOT}build-info.json?verify=${EXPECTED_SHA}" -o /tmp/build-info.json \
               && grep -q "${EXPECTED_SHA}" /tmp/build-info.json \
               && curl -fsSL -H 'Cache-Control: no-cache' "${ROOT}gba-visuals.js?v=8&verify=${EXPECTED_SHA}" >/dev/null \
+              && curl -fsSL -H 'Cache-Control: no-cache' "${ROOT}gba-sprite-fix.js?v=8&verify=${EXPECTED_SHA}" >/dev/null \
               && curl -fsSL -H 'Cache-Control: no-cache' "${ROOT}service-worker.js?verify=${EXPECTED_SHA}" >/dev/null; then
               echo "Verified live deployment at ${ROOT}"
               cat /tmp/build-info.json
