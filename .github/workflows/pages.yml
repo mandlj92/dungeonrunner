@@ -20,6 +20,11 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+      - name: Run production smoke test
+        run: node --require ./tests/diagnostic-hook.js tests/smoke-test.js
 
       - name: Validate JavaScript syntax
         run: |
@@ -31,9 +36,7 @@ jobs:
           node --check release-enhancements.js
           node --check service-worker.js
           node --check tests/smoke-test.js
-
-      - name: Run production smoke test
-        run: node tests/smoke-test.js
+          node --check tests/diagnostic-hook.js
 
       - name: Validate release references
         run: |
