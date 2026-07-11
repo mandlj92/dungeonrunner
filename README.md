@@ -10,9 +10,43 @@ Live build:
 
 Every push to `main` deploys through `.github/workflows/pages.yml`.
 
-## Build 4: production pixel asset pass
+## Build 5: mobile and production QA pass
 
-The browser game now uses a dedicated `pixel-assets.js` library containing hand-authored raster sprites and tiles rather than relying on geometric placeholder characters.
+Build 5 formats the game as a landscape-first mobile web app and tightens combat presentation.
+
+### Mobile production work
+
+- Safe-area support for iPhone notches, rounded corners, and the home indicator
+- Correct 16:9 scaling without stretching the 320 × 180 internal render
+- Landscape orientation prompt with an optional portrait override
+- Fullscreen and landscape-orientation requests when a run starts
+- Larger touch targets and a vertical Dash, Nova, and Swap button stack
+- Clamped virtual joystick travel and visible right-stick aiming feedback
+- Mobile haptics for damage, dashing, Nova, and weapon switching where supported
+- Automatic pause when the browser is hidden or the app is backgrounded
+- Installable fullscreen web-app manifest
+- Compact menu, relic, treasure, armory, and summary layouts for short landscape displays
+
+### Production gameplay and graphics work
+
+- Y-sorted entities and walls for correct foreground/background occlusion
+- Explicit player and enemy animation states instead of relying only on timer inference
+- Wind-up frames for Shooter, Gravebinder, Warden, Stalker, and Brute attacks
+- Fair melee contact attacks with visible warning boxes and cooldowns
+- Corrected hit flashing without tinting nearby floor and wall pixels
+- Increased Iron Revenant and Warden sprite scale with adjusted production presentation
+- Larger mobile-readable health bars, controls, and combat telegraphs
+- Optional collision, sprite-baseline, entity-count, and FPS overlay for QA
+
+Append `?qa=1` to the live URL to activate the internal QA overlay:
+
+`https://mandlj92.github.io/dungeonrunner/?qa=1`
+
+The Pages workflow now checks every JavaScript file with `node --check` before deployment and verifies that all mobile release files are present.
+
+## Pixel asset system
+
+The browser game uses a dedicated `pixel-assets.js` library containing hand-authored raster sprites and tiles rather than geometric placeholder characters.
 
 Implemented assets include:
 
@@ -25,9 +59,8 @@ Implemented assets include:
 - Explosive urn, treasure chest, heart, Ember, and weapon icons
 - Player and enemy projectiles, impact sparks, and Ash Nova graphics
 - Pixel HUD portrait, framed health and Nova meters, score panel, bounty panel, and weapon bar
-- Runtime animation selection based on movement, aim direction, firing, dashing, attacks, and damage
 
-The game still renders internally at **320 × 180** and scales to the display using nearest-neighbor rendering.
+The game renders internally at **320 × 180** and scales using nearest-neighbor rendering.
 
 ## Run systems
 
@@ -62,7 +95,7 @@ The game still renders internally at **320 × 180** and scales to the display us
 | Change weapon | E or 1–3 | X / Square | Swap button |
 | Dash | Space | Left bumper | Dash button |
 | Ash Nova | Q | Y / Triangle | Nova button |
-| Pause | Escape | Start | Browser controls |
+| Pause | Escape | Start | Automatic when backgrounded |
 
 ## itch.io packaging
 
@@ -70,10 +103,12 @@ Put these files in a ZIP archive:
 
 - `index.html`
 - `styles.css`
+- `manifest.webmanifest`
 - `game-core.js`
 - `game-combat.js`
 - `pixel-assets.js`
 - `game-render-v4.js`
+- `production-mobile.js`
 
 Create an itch.io HTML project, upload the ZIP, select **This file will be played in the browser**, use a 16:9 viewport such as 1280 × 720, and allow fullscreen.
 
