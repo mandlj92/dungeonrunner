@@ -1,4 +1,4 @@
-# Dungeon Run: Ashvault — Pixel Art Edition
+# Dungeon Run: Ashvault — Authored Art Edition
 
 A complete, zero-build browser roguelite plus the original Godot prototype.
 
@@ -9,6 +9,26 @@ Live build:
 `https://mandlj92.github.io/dungeonrunner/`
 
 Every push to `main` deploys through `.github/workflows/pages.yml`.
+
+## Build 12: authored GBA-style art foundation
+
+Build 12 converts the supplied visual reference sheets into a production sprite-atlas package and installs it over the existing code-drawn fallback art.
+
+### Authored graphics now integrated
+
+- Four-direction player idle, walk, fire, dash, hurt, and death animation sets
+- Four-direction Stalker idle, movement, attack, hurt, and death animation sets
+- Four-direction Shooter idle, movement, firing, hurt, and death animation sets
+- Four-direction Brute idle, movement, attack, hurt, and death animation sets
+- Stone floor variations, cracked floor tiles, wall faces, and top edges
+- Explosive urns, treasure chests, Embers, hearts, and weapon icons
+- Player and enemy projectiles, impact sparks, and Ash Nova effects
+- Authored player portrait and rebuilt in-canvas HUD panels
+- Removal of the remaining scanline post-process from the final renderer
+
+The original `pixel-assets.js` system remains available as a fallback. Build 12 loads compressed 16-color PNG atlases, slices them into animation frames at runtime, and keeps nearest-neighbor rendering at the existing **320 × 180** internal resolution.
+
+The release pipeline validates every atlas as a PNG, checks the loader and HTML wiring, includes all authored files in the offline cache and itch.io package, and verifies the live Build 12 deployment.
 
 ## Build 7: branching dungeon routes
 
@@ -75,16 +95,16 @@ Append `?qa=1` to the live URL to activate the internal QA overlay:
 
 ## Pixel asset system
 
-The browser game uses a dedicated `pixel-assets.js` library containing hand-authored raster sprites and tiles rather than geometric placeholder characters.
+The browser game uses a layered asset system. `authored-assets.js` installs the Build 12 sprite atlases, while `pixel-assets.js` provides immediate code-drawn fallback graphics if authored image loading fails.
 
 Implemented assets include:
 
-- Directional player sprites with idle, walking, shooting, dashing, and hurt frames
-- Directional Stalker sprites with movement, attack, and hurt frames
-- Directional Brute sprites with movement, attack, and hurt frames
-- Directional Shooter sprites with movement, firing, recoil, and hurt frames
-- Dedicated sprites for the Vault Charger, Gravebinder, Iron Revenant, and Warden
-- Three dungeon floor tiles and repeating wall tiles
+- Directional player sprites with idle, walking, shooting, dashing, hurt, and death frames
+- Directional Stalker sprites with movement, attack, hurt, and death frames
+- Directional Brute sprites with movement, attack, hurt, and death frames
+- Directional Shooter sprites with movement, firing, hurt, and death frames
+- Dedicated fallback sprites for the Vault Charger, Gravebinder, Iron Revenant, and Warden
+- Dungeon floor variants and repeating authored wall tiles
 - Explosive urn, treasure chest, heart, Ember, and weapon icons
 - Player and enemy projectiles, impact sparks, and Ash Nova graphics
 - Pixel HUD portrait, framed health and Nova meters, score panel, bounty panel, and weapon bar
@@ -129,21 +149,9 @@ The game renders internally at **320 × 180** and scales using nearest-neighbor 
 
 ## itch.io packaging
 
-Put these files in a ZIP archive:
+The Pages workflow automatically builds `ashvault-html5.zip` with the complete static game, including all `authored-*.js` atlas data and the Build 12 loader.
 
-- `index.html`
-- `styles.css`
-- `manifest.webmanifest`
-- `service-worker.js`
-- `game-core.js`
-- `game-combat.js`
-- `route-system.js`
-- `pixel-assets.js`
-- `game-render-v4.js`
-- `production-mobile.js`
-- `release-enhancements.js`
-
-Create an itch.io HTML project, upload the ZIP, select **This file will be played in the browser**, use a 16:9 viewport such as 1280 × 720, and allow fullscreen.
+For manual packaging, include the core HTML, CSS, manifest, service worker, gameplay scripts, every `authored-*.js` file, and `authored-assets.js`. Create an itch.io HTML project, upload the ZIP, select **This file will be played in the browser**, use a 16:9 viewport such as 1280 × 720, and allow fullscreen.
 
 Progress is stored in the browser using `localStorage`. Each browser profile has its own armory, achievements, and scoreboard.
 
