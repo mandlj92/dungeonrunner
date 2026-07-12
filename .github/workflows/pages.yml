@@ -3,6 +3,8 @@ name: Deploy Ashvault to Pages
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -11,7 +13,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -90,6 +92,7 @@ jobs:
           for file in authored-*.js; do test -f "$file"; done
 
       - name: Configure Pages
+        if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v5
 
       - name: Prepare static site
@@ -107,6 +110,7 @@ jobs:
           zip -9 -r ../_release/ashvault-html5.zip .
 
       - name: Upload itch.io package
+        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: ashvault-html5-${{ github.run_number }}
@@ -115,11 +119,13 @@ jobs:
           retention-days: 30
 
       - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site
 
   deploy:
+    if: github.event_name != 'pull_request'
     needs: build
     environment:
       name: github-pages
